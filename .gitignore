@@ -1,0 +1,45 @@
+.DS_Store
+
+# Terraform specific
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform/
+.terraform.lock.hcl
+
+# Logs
+*.log
+
+# Miscellaneous
+*.retry
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfvars files
+*.tfvars
+*.auto.tfvars
+
+# Override files which can be used to override default attribute values
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+# example: *tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Ignore all .keys
+*.key
+
+# IDE files
+.idea/
+.vscode/
+*.iml

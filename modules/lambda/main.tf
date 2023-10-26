@@ -1,0 +1,47 @@
+data "archive_file" "this" {
+  type        = "zip"
+  source_dir  = can(file(var.source_path)) ? null : var.source_path
+  source_file = can(file(var.source_path)) ? var.source_path : null
+  output_path = "s3_archives/lambda/${var.function_name}.zip"
+}
+
+resource "aws_lambda_function" "this" {
+  function_name = var.function_name
+  handler       = var.handler
+  role          = aws_iam_role.lambda_execution_role.arn
+  runtime       = var.runtime
+
+  source_code_hash = data.archive_file.this.output_base64sha256
+  filename         = data.archive_file.this.output_path
+
+  environment {
+    variables = var.environment_variables
+  }
+
+  layers = var.layers
+}
+
+resource "aws_iam_role" "lambda_execution_role" {
+
+  name = "lambda_execution_role-${var.function_name}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
+  role       = aws_iam_role.lambda_execution_role.name
+  for_each   = var.db_policies
+  policy_arn = each.value
+}
