@@ -45,3 +45,30 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
   for_each   = var.db_policies
   policy_arn = each.value
 }
+
+
+resource "aws_iam_role_policy" "cognito_policy" {
+  count = var.add_cognito_policy ? 1 : 0
+  name  = "cognito_policy-${var.function_name}"
+  role  = aws_iam_role.lambda_execution_role.id
+
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "cognito-identity:*",
+            "cognito-idp:*",
+            "cognito-sync:*",
+            "iam:ListRoles",
+            "iam:ListOpenIdConnectProviders",
+            "sns:ListPlatformApplications"
+          ],
+          "Resource" : "${aws_cognito_user_pool.cognito_pool.arn}"
+        }
+      ]
+    }
+  )
+}

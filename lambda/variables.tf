@@ -43,6 +43,12 @@ variable "db_policies" {
   default     = {}
 }
 
+variable "add_cognito_policy" {
+  description = "Add the Cognito policy to the Lambda function."
+  type        = bool
+  default     = false
+}
+
 # variable "db_configs" {
 #   description = "Configuration for database permissions"
 #   type = list(object({
