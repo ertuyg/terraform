@@ -6,13 +6,14 @@ provider "aws" {
 
 
 module "lambda" {
-  source        = "../lambda"
-  for_each      = local.lambda_configs
-  function_name = "${var.api_name}_${var.stage}_${var.version_number}_${each.key}"
-  source_path   = "${var.dist_root_dir}/${each.value.source_dir}"
-  handler       = lookup(each.value, "handler", "${each.value.source_file}.handler")
-  runtime       = lookup(each.value, "runtime", "nodejs16.x")
-  db_policies   = lookup(each.value, "db_policies", {})
+  source           = "../lambda"
+  for_each         = local.lambda_configs
+  function_name    = "${var.api_name}_${var.stage}_${var.version_number}_${each.key}"
+  source_path      = "${var.dist_root_dir}/${each.value.source_dir}"
+  handler          = lookup(each.value, "handler", "${each.value.source_file}.handler")
+  runtime          = lookup(each.value, "runtime", "nodejs16.x")
+  db_policies      = lookup(each.value, "db_policies", {})
+  cognito_pool_arn = lookup(each.value, "add_cognito_policy", false) ? module.cognito.user_pool_arn : null
   # environment_variables = {
   #   STAGE = var.stage
   # }

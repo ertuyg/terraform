@@ -3,6 +3,12 @@ output "user_pool_id" {
   description = "Cognito User Pool ID"
 }
 
+output "user_pool_arn" {
+  value       = aws_cognito_user_pool.this.arn
+  description = "Cognito User Pool ARN"
+}
+
+
 output "user_pool_issuer" {
   value       = aws_cognito_user_pool.this.endpoint
   description = "Cognito User Pool Issuer"

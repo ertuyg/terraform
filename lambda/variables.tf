@@ -48,7 +48,11 @@ variable "add_cognito_policy" {
   type        = bool
   default     = false
 }
+variable "cognito_pool_arn" {
+  description = "The Cognito pool Arn."
+  type        = string
 
+}
 # variable "db_configs" {
 #   description = "Configuration for database permissions"
 #   type = list(object({

@@ -48,7 +48,7 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
 
 
 resource "aws_iam_role_policy" "cognito_policy" {
-  count = var.add_cognito_policy ? 1 : 0
+  count = var.cognito_pool_arn != null ? 1 : 0
   name  = "cognito_policy-${var.function_name}"
   role  = aws_iam_role.lambda_execution_role.id
 
@@ -66,7 +66,7 @@ resource "aws_iam_role_policy" "cognito_policy" {
             "iam:ListOpenIdConnectProviders",
             "sns:ListPlatformApplications"
           ],
-          "Resource" : "${aws_cognito_user_pool.cognito_pool.arn}"
+          "Resource" : "${var.cognito_pool_arn}"
         }
       ]
     }
