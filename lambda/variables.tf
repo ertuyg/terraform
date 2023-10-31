@@ -51,7 +51,6 @@ variable "add_cognito_policy" {
 variable "cognito_pool_arn" {
   description = "The Cognito pool Arn."
   type        = string
-
 }
 # variable "db_configs" {
 #   description = "Configuration for database permissions"
