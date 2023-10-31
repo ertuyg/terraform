@@ -56,11 +56,11 @@ variable "routes" {
 variable "cognito_user_pool_issuer" {
   description = "Cognito User Pool Issuer"
   type        = string
-  default     = ""
+  # default     = ""
 }
 
 variable "cognito_user_pool_client_id" {
   description = "Cognito User Pool Client ID"
   type        = string
-  default     = ""
+  # default     = ""
 }
