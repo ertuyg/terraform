@@ -154,23 +154,18 @@ variable "schema" {
 variable "account_recovery_setting" {
   description = "Cognito User Pool Account Recovery Setting"
   type = list(object({
-    recovery_mechanism = list(object({
-      name     = string
-      priority = number
-    }))
+    name     = string
+    priority = number
   }))
   default = [
     {
-      recovery_mechanism = [
-        {
-          name     = "verified_email"
-          priority = 1
-        },
-        {
-          name     = "verified_phone_number"
-          priority = 2
-        }
-      ]
+      name     = "verified_email"
+      priority = 1
+    },
+    {
+      name     = "verified_phone_number"
+      priority = 2
     }
   ]
 }
+

@@ -17,8 +17,8 @@ resource "aws_cognito_user_pool" "this" {
     for_each = var.account_recovery_setting
     content {
       recovery_mechanism {
-        name     = account_recovery_setting.value.recovery_mechanism.name
-        priority = account_recovery_setting.value.recovery_mechanism.priority
+        name     = account_recovery_setting.value.name
+        priority = account_recovery_setting.value.priority
       }
     }
   }
