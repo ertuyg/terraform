@@ -151,8 +151,8 @@ variable "schema" {
   }]
 }
 
-variable "account_recovery_setting" {
-  description = "Cognito User Pool Account Recovery Setting"
+variable "recovery_mechanism" {
+  description = "Cognito User Pool Account Recovery Setting Recovery Mechanism"
   type = list(object({
     name     = string
     priority = number

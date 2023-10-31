@@ -13,12 +13,12 @@ resource "aws_cognito_user_pool" "this" {
     temporary_password_validity_days = var.temporary_password_validity_days
   }
 
-  dynamic "account_recovery_setting" {
-    for_each = var.account_recovery_setting
-    content {
-      recovery_mechanism {
-        name     = account_recovery_setting.value.name
-        priority = account_recovery_setting.value.priority
+  account_recovery_setting {
+    dynamic "recovery_mechanism" {
+      for_each = var.recovery_mechanism
+      content {
+        name     = recovery_mechanism.value.name
+        priority = recovery_mechanism.value.priority
       }
     }
   }
