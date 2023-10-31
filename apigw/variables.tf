@@ -52,3 +52,15 @@ variable "routes" {
     route_key            = string
   }))
 }
+
+variable "cognito_user_pool_issuer" {
+  description = "Cognito User Pool Issuer"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_user_pool_client_id" {
+  description = "Cognito User Pool Client ID"
+  type        = string
+  default     = ""
+}

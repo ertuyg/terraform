@@ -13,7 +13,35 @@ resource "aws_apigatewayv2_stage" "this" {
   api_id      = aws_apigatewayv2_api.this.id
   name        = var.stage
   auto_deploy = true
+  #  TODO: log ları kullanıp kullanmamaya sonra bakalım bunlar zaten lambda üzerinden loglanıyor. apigw de gerek olmayabilir. 
+  #   access_log_settings {
+  #     destination_arn = aws_cloudwatch_log_group.api_gw.arn
+
+  #     format = jsonencode({
+  #       requestId               = "$context.requestId"
+  #       sourceIp                = "$context.identity.sourceIp"
+  #       requestTime             = "$context.requestTime"
+  #       protocol                = "$context.protocol"
+  #       httpMethod              = "$context.httpMethod"
+  #       resourcePath            = "$context.resourcePath"
+  #       routeKey                = "$context.routeKey"
+  #       status                  = "$context.status"
+  #       responseLength          = "$context.responseLength"
+  #       integrationErrorMessage = "$context.integrationErrorMessage"
+  #       }
+  #     )
+  #   }  
 }
+
+# auto deploy olduğu için gerek yok. 
+# resource "aws_apigatewayv2_deployment" "this" {
+#   api_id = aws_apigatewayv2_api.this.id
+
+#   lifecycle {
+#     create_before_destroy = true
+#   }
+# }
+
 
 resource "aws_apigatewayv2_integration" "this" {
   for_each = var.routes
@@ -35,8 +63,7 @@ resource "aws_apigatewayv2_route" "this" {
   target    = "integrations/${aws_apigatewayv2_integration.this[each.key].id}"
 
   # Eğer use_authorization = true ise, bu özelliği kullanabilirsiniz
-  # authorizer_id = each.value.use_authorization ? aws_apigatewayv2_authorizer.jwt_authorizer.id : null
-  # authorization_type = each.value.use_authorization ? "WHATEVER_TYPE" : null
+  authorizer_id = each.value.use_authorization ? aws_apigatewayv2_authorizer.cognito_authorizer.id : null
 
 }
 # bu belki lambda modülüne taşınabilir ama integration yoksa bu yok bu nedenle burada durması daha mantıklı
@@ -50,94 +77,19 @@ resource "aws_lambda_permission" "this" {
 }
 
 
-# resource "aws_apigatewayv2_integration" "this" {
-# #   count = length(var.lambda_arns)
-#     for_each = { for r in var.routes : r.route_key => r }
-#   api_id             = aws_apigatewayv2_api.this.id
-#   integration_uri    = var.lambda_invoke_arns[count.index]
-#   integration_type   = lookup(each.value, "integration_type", "AWS_PROXY")
-#   integration_method = each.value.integration_method
 
-#   passthrough_behavior   = lookup(each.value, "passthrough_behavior", null)
-#   payload_format_version = lookup(each.value, "payload_format_version", "2.0")
+resource "aws_apigatewayv2_authorizer" "cognito_authorizer" {
+  api_id           = aws_apigatewayv2_api.this.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.api_name}Authorizer"
+  jwt_configuration {
+    issuer   = var.cognito_user_pool_issuer
+    audience = [var.cognito_user_pool_client_id]
+  }
+}
+
+#  TODO: eğer logları kullanmak istersek bunları da ekleyebiliriz.
+# resource "aws_cloudwatch_log_group" "this" {
+#   name = "/aws/apigateway/${aws_apigatewayv2_api.this.name}"
 # }
-
-# resource "aws_apigatewayv2_route" "this" {
-#   count  = length(var.lambda_arns)
-#   api_id = aws_apigatewayv2_api.example.id
-#   # ... diğer özellikler ve her Lambda için uygun rota (route_key) tanımlamaları ...
-# }
-
-# resource "aws_apigatewayv2_route" "route" {
-#   for_each = { for r in var.routes : r.route_key => r }
-
-#   api_id    = aws_apigatewayv2_api.api.id
-#   route_key = each.value.route_key
-#   target    = "integrations/${aws_apigatewayv2_integration.integration[each.key].id}"
-# }
-
-
-# resource "aws_lambda_permission" "api_gateway_permission" {
-#   for_each      = { for r in var.routes : r.route_key => r }
-#   statement_id  = "AllowExecutionFromAPIGateway"
-#   action        = "lambda:InvokeFunction"
-#   function_name = r.function_name
-#   principal     = "apigateway.amazonaws.com"
-#   source_arn    = "${aws_apigatewayv2_api.this.execution_arn}/*/${each.value.http_method}${each.value.route_key}"
-# }
-
-
-
-# resource "aws_apigatewayv2_stage" "this" {
-#   api_id      = aws_apigatewayv2_api.this.id
-#   name        = var.stage
-#   auto_deploy = true
-#   #   deployment_id = aws_apigatewayv2_deployment.this.id # auto deploy olduğu için buna gerek yok.  
-
-#   #  TODO: log ları kullanıp kullanmamaya sonra bakalım bunlar zaten lambda üzerinden loglanıyor. apigw de gerek olmayabilir. 
-#   #   access_log_settings {
-#   #     destination_arn = aws_cloudwatch_log_group.api_gw.arn
-
-#   #     format = jsonencode({
-#   #       requestId               = "$context.requestId"
-#   #       sourceIp                = "$context.identity.sourceIp"
-#   #       requestTime             = "$context.requestTime"
-#   #       protocol                = "$context.protocol"
-#   #       httpMethod              = "$context.httpMethod"
-#   #       resourcePath            = "$context.resourcePath"
-#   #       routeKey                = "$context.routeKey"
-#   #       status                  = "$context.status"
-#   #       responseLength          = "$context.responseLength"
-#   #       integrationErrorMessage = "$context.integrationErrorMessage"
-#   #       }
-#   #     )
-#   #   }
-
-# }
-
-# # auto deploy olduğu için gerek yok. 
-# # resource "aws_apigatewayv2_deployment" "this" {
-# #   api_id = aws_apigatewayv2_api.this.id
-
-# #   lifecycle {
-# #     create_before_destroy = true
-# #   }
-# # }
-
-
-# # resource "aws_apigatewayv2_authorizer" "jwt_authorizer" {
-# #   api_id           = aws_apigatewayv2_api.this.id
-# #   authorizer_type  = "JWT"
-# #   identity_sources = ["$request.header.Authorization"]
-# #   name             = "${var.api_name}Authorizer"
-
-# #   jwt_configuration {
-# #     audience = ["AUDIENCE_VALUE"]    #TODO: cognitoya bağla
-# #     issuer   = "https://pruvapm.com" #TODO: cognitoya bağla
-# #   }
-# # }
-
-# #  TODO: eğer logları kullanmak istersek bunları da ekleyebiliriz.
-# # resource "aws_cloudwatch_log_group" "this" {
-# #   name = "/aws/apigateway/${aws_apigatewayv2_api.this.name}"
-# # }

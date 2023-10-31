@@ -1,0 +1,87 @@
+
+resource "aws_cognito_user_pool" "this" {
+  name = var.user_pool_name
+
+  username_attributes      = var.username_attributes
+  auto_verified_attributes = var.auto_verified_attributes
+  password_policy {
+    minimum_length                   = var.minimum_length
+    require_lowercase                = var.require_lowercase
+    require_numbers                  = var.require_numbers
+    require_symbols                  = var.require_symbols
+    require_uppercase                = var.require_uppercase
+    temporary_password_validity_days = var.temporary_password_validity_days
+  }
+
+  dynamic "account_recovery_setting" {
+    for_each = var.account_recovery_setting
+    content {
+      recovery_mechanism {
+        name     = account_recovery_setting.value.recovery_mechanism.name
+        priority = account_recovery_setting.value.recovery_mechanism.priority
+      }
+    }
+  }
+
+  dynamic "schema" {
+    for_each = var.schema
+    content {
+      name                     = schema.value.name
+      attribute_data_type      = schema.value.attribute_data_type
+      developer_only_attribute = schema.value.developer_only_attribute
+      mutable                  = schema.value.mutable
+      required                 = schema.value.required
+
+      string_attribute_constraints {
+        min_length = schema.value.string_attribute_constraints.min_length
+        max_length = schema.value.string_attribute_constraints.max_length
+      }
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "email"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+  schema {
+    attribute_data_type      = "String"
+    developer_only_attribute = false
+    mutable                  = true
+    name                     = "name"
+    required                 = true
+
+    string_attribute_constraints {
+      min_length = 1
+      max_length = 256
+    }
+  }
+
+}
+
+resource "aws_cognito_user_pool_client" "this" {
+  name = var.client_name
+
+  user_pool_id    = aws_cognito_user_pool.this.id
+  generate_secret = var.client_generate_secret
+
+  token_validity_units {
+    access_token  = var.access_token_validity_unit
+    id_token      = var.id_token_validity_unit
+    refresh_token = var.refresh_token_validity_unit
+  }
+  access_token_validity         = var.access_token_validity
+  id_token_validity             = var.id_token_validity
+  refresh_token_validity        = var.refresh_token_validity
+  prevent_user_existence_errors = var.prevent_user_existence_errors
+  explicit_auth_flows           = var.explicit_auth_flows
+
+}

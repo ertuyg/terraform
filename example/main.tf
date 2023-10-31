@@ -6,7 +6,7 @@ provider "aws" {
 
 
 module "lambda" {
-  source        = "./modules/lambda"
+  source        = "../lambda"
   for_each      = local.lambda_configs
   function_name = "${var.api_name}_${var.stage}_${var.version_number}_${each.key}"
   source_path   = "${var.dist_root_dir}/${each.value.source_dir}"
@@ -20,7 +20,7 @@ module "lambda" {
 }
 
 module "apigateway" {
-  source   = "./modules/apigw"
+  source   = "../apigw"
   api_name = var.api_name
   stage    = var.stage
   routes   = local.lambdas_for_apigw
@@ -39,11 +39,16 @@ module "apigateway" {
 
 
 module "dynamodb" {
-  source     = "./modules/dynamodb"
+  source     = "../dynamodb"
   for_each   = local.dynamodb_tables
   table_name = each.value.table_name
 }
 
+module "cognito" {
+  source         = "../cognito"
+  user_pool_name = "${var.api_name}-${var.stage}-${var.version_number}_user_pool"
+  client_name    = "${var.api_name}-${var.stage}-${var.version_number}_client"
+}
 
 ###### FOREACH'li versiyonlar da kullanılabilir ######
 # module "lambda_layers" {
