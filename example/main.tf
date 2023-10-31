@@ -20,10 +20,12 @@ module "lambda" {
 }
 
 module "apigateway" {
-  source   = "../apigw"
-  api_name = var.api_name
-  stage    = var.stage
-  routes   = local.lambdas_for_apigw
+  source                      = "../apigw"
+  api_name                    = var.api_name
+  stage                       = var.stage
+  routes                      = local.lambdas_for_apigw
+  cognito_user_pool_issuer    = ""
+  cognito_user_pool_client_id = ""
   # routes = {
   #   for name, config in local.lambda_configs : name => {
   #     invoke_arn           = module.lambda[name].invoke_arn
