@@ -52,6 +52,11 @@ module "cognito" {
   client_name    = "${var.api_name}-${var.stage}-${var.version_number}_client"
 }
 
+module "s3" {
+  source      = "../s3"
+  bucket_name = "${var.api_name}-front-end"
+}
+
 ###### FOREACH'li versiyonlar da kullanılabilir ######
 # module "lambda_layers" {
 #   source = "./modules/layers"
