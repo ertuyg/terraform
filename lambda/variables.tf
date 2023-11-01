@@ -43,20 +43,8 @@ variable "policy_attachments" {
   default     = {}
 }
 
-# variable "add_cognito_policy" {
-#   description = "Add the Cognito policy to the Lambda function."
-#   type        = bool
-#   default     = false
-# }
-# variable "cognito_pool_arn" {
-#   description = "The Cognito pool Arn."
-#   type        = string
-# }
-# variable "db_configs" {
-#   description = "Configuration for database permissions"
-#   type = list(object({
-#     table_name = string
-#     permission = string
-#   }))
-#   default = []
-# }
+variable "log_retention" {
+  description = "The Lambda Log retention in days."
+  type        = number
+  default     = 7
+}

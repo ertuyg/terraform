@@ -40,8 +40,13 @@ resource "aws_iam_role" "lambda_execution_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
+resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
   role       = aws_iam_role.lambda_execution_role.name
   for_each   = var.policy_attachments
   policy_arn = each.value
+}
+
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${var.function_name}" #aws_lambda_function.this.function_name
+  retention_in_days = var.log_retention
 }
