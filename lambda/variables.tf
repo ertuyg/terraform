@@ -48,3 +48,9 @@ variable "log_retention" {
   type        = number
   default     = 7
 }
+
+variable "lambda_timeout" {
+  description = "The Lambda timeout in seconds."
+  type        = number
+  default     = 5
+}
