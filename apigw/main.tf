@@ -13,24 +13,24 @@ resource "aws_apigatewayv2_stage" "this" {
   api_id      = aws_apigatewayv2_api.this.id
   name        = var.stage
   auto_deploy = true
-  #  TODO: log ları kullanıp kullanmamaya sonra bakalım bunlar zaten lambda üzerinden loglanıyor. apigw de gerek olmayabilir. 
-  #   access_log_settings {
-  #     destination_arn = aws_cloudwatch_log_group.api_gw.arn
 
-  #     format = jsonencode({
-  #       requestId               = "$context.requestId"
-  #       sourceIp                = "$context.identity.sourceIp"
-  #       requestTime             = "$context.requestTime"
-  #       protocol                = "$context.protocol"
-  #       httpMethod              = "$context.httpMethod"
-  #       resourcePath            = "$context.resourcePath"
-  #       routeKey                = "$context.routeKey"
-  #       status                  = "$context.status"
-  #       responseLength          = "$context.responseLength"
-  #       integrationErrorMessage = "$context.integrationErrorMessage"
-  #       }
-  #     )
-  #   }  
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_gw.arn
+
+    format = jsonencode({
+      requestId               = "$context.requestId"
+      sourceIp                = "$context.identity.sourceIp"
+      requestTime             = "$context.requestTime"
+      protocol                = "$context.protocol"
+      httpMethod              = "$context.httpMethod"
+      resourcePath            = "$context.resourcePath"
+      routeKey                = "$context.routeKey"
+      status                  = "$context.status"
+      responseLength          = "$context.responseLength"
+      integrationErrorMessage = "$context.integrationErrorMessage"
+      }
+    )
+  }
 }
 
 # auto deploy olduğu için gerek yok. 
@@ -90,7 +90,6 @@ resource "aws_apigatewayv2_authorizer" "cognito_authorizer" {
   }
 }
 
-#  TODO: eğer logları kullanmak istersek bunları da ekleyebiliriz.
-# resource "aws_cloudwatch_log_group" "this" {
-#   name = "/aws/apigateway/${aws_apigatewayv2_api.this.name}"
-# }
+resource "aws_cloudwatch_log_group" "this" {
+  name = "/aws/apigateway/${aws_apigatewayv2_api.this.name}"
+}
