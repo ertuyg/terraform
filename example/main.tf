@@ -57,6 +57,14 @@ module "s3" {
   bucket_name = "${var.api_name}-front-end"
 }
 
+module "lambda_layer" {
+  source              = "../lambda-layer"
+  name                = "common"
+  source_path         = "${var.dist_root_dir}/layers/common"
+  description         = "Common Functions"
+  compatible_runtimes = ["nodejs16.x"]
+}
+
 ###### FOREACH'li versiyonlar da kullanılabilir ######
 # module "lambda_layers" {
 #   source = "./modules/layers"
