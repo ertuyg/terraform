@@ -14,6 +14,11 @@ output "user_pool_issuer" {
   description = "Cognito User Pool Issuer"
 }
 
+output "admin_policy_arn" {
+  description = "ARNs of the created DynamoDB tables"
+  value       = aws_iam_policy.admin_policy.arn
+}
+
 # output "user_pool_domain" {
 #   value       = aws_cognito_user_pool_domain.cognito_user_pool_domain.domain
 #   description = "Cognito User Pool Domain"

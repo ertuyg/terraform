@@ -7,9 +7,10 @@ locals {
       route_key          = "projects"
       layers             = ["layer_common"]
       integrate_with_api = true
-      db_policies = {
+      policy_attachments = {
         projects = module.dynamodb["projects"].readwrite_policy_arn,
-        services = module.dynamodb["services"].readonly_policy_arn
+        services = module.dynamodb["services"].readonly_policy_arn,
+        cognito  = module.cognito.admin_policy_arn
       }
       #   db_configs = [
       #     {

@@ -85,3 +85,31 @@ resource "aws_cognito_user_pool_client" "this" {
   explicit_auth_flows           = var.explicit_auth_flows
 
 }
+
+
+
+resource "aws_iam_policy" "admin_policy" {
+  name        = "CognitoAdminPolicy"
+  description = "Allows admin access to Cognito"
+
+  policy = jsonencode(
+    {
+      "Version" : "2012-10-17",
+      "Statement" : [
+        {
+          "Effect" : "Allow",
+          "Action" : [
+            "cognito-identity:*",
+            "cognito-idp:*",
+            "cognito-sync:*",
+            "iam:ListRoles",
+            "iam:ListOpenIdConnectProviders",
+            "sns:ListPlatformApplications"
+          ],
+          "Resource" : "${aws_cognito_user_pool.this.arn}"
+        }
+      ]
+    }
+  )
+
+}
