@@ -20,18 +20,18 @@ resource "aws_dynamodb_table" "this" {
   dynamic "attribute" {
     for_each = var.additional_attributes
     content {
-      name = attribute.value.name
-      type = attribute.value.type
+      name = each.value.name
+      type = each.value.type
     }
   }
 
   dynamic "global_secondary_index" {
     for_each = var.global_secondary_indexes
     content {
-      name            = global_secondary_index.key
-      hash_key        = global_secondary_index.value.hash_key
-      range_key       = global_secondary_index.value.range_key
-      projection_type = global_secondary_index.value.projection_type
+      name            = each.key
+      hash_key        = each.value.hash_key
+      range_key       = each.value.range_key
+      projection_type = each.value.projection_type
       #   read_capacity   = var.billing_mode == "PROVISIONED" ? global_secondary_index.read_capacity : null
       #   write_capacity  = var.billing_mode == "PROVISIONED" ? global_secondary_index.write_capacity : null      
     }
