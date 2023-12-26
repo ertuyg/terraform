@@ -10,5 +10,5 @@ output "website_endpoint" {
 
 output "bucket_policy_arn" {
   description = "The ARN of the S3 bucket policy"
-  value       = aws_iam_policy.lambda_s3_policy.arn
+  value       = var.access_lambda ? aws_iam_policy.lambda_s3_policy[0].arn : null
 }
