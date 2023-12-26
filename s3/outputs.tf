@@ -8,7 +8,7 @@ output "website_endpoint" {
   value       = var.enable_website ? aws_s3_bucket_website_configuration.this[0].website_endpoint : null
 }
 
-output "bucket_arn" {
-  description = "The ARN of the S3 bucket"
-  value       = aws_s3_bucket.this.arn
+output "bucket_policy_arn" {
+  description = "The ARN of the S3 bucket policy"
+  value       = aws_iam_policy.lambda_s3_policy.arn
 }
