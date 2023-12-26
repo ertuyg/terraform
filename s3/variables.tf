@@ -21,3 +21,9 @@ variable "website_configuration_error_document" {
   type        = string
   default     = "index.html"
 }
+
+variable "access_lambda" {
+  description = "Enable the S3 bucket access from lambda"
+  type        = bool
+  default     = false
+}

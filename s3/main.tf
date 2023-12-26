@@ -75,3 +75,28 @@ resource "aws_s3_bucket_acl" "this" {
   bucket = aws_s3_bucket.this.id
   acl    = "public-read"
 }
+
+
+resource "aws_iam_policy" "lambda_s3_policy" {
+  count       = var.access_lambda ? 1 : 0
+  name        = "lambda_s3_policy-${var.bucket_name}"
+  description = "IAM policy for Lambda to access S3 ${var.bucket_name}"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket",
+        ],
+        Effect = "Allow",
+        Resource = [
+          aws_s3_bucket.this.arn,
+          "${aws_s3_bucket.this.arn}/*",
+        ],
+      },
+    ],
+  })
+}
