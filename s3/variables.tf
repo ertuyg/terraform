@@ -27,3 +27,10 @@ variable "access_lambda" {
   type        = bool
   default     = false
 }
+
+
+variable "is_public" {
+  description = "Enable the S3 bucket as a website"
+  type        = bool
+  default     = false
+}

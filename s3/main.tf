@@ -28,7 +28,7 @@ resource "aws_s3_bucket_website_configuration" "this" {
 }
 
 resource "aws_s3_bucket_policy" "this" {
-  count  = var.enable_website ? 1 : 0
+  count  = (var.enable_website || var.is_public) ? 1 : 0
   bucket = aws_s3_bucket.this.id
 
   policy = jsonencode({
@@ -56,7 +56,7 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 }
 
 resource "aws_s3_bucket_public_access_block" "this" {
-  count  = var.enable_website ? 1 : 0
+  count  = (var.enable_website || var.is_public) ? 1 : 0
   bucket = aws_s3_bucket.this.id
 
   block_public_acls       = false
@@ -66,7 +66,7 @@ resource "aws_s3_bucket_public_access_block" "this" {
 }
 
 resource "aws_s3_bucket_acl" "this" {
-  count = var.enable_website ? 1 : 0
+  count = (var.enable_website || var.is_public) ? 1 : 0
   depends_on = [
     aws_s3_bucket_ownership_controls.this,
     aws_s3_bucket_public_access_block.this,
