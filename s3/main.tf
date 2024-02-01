@@ -48,7 +48,7 @@ resource "aws_s3_bucket_policy" "this" {
 }
 
 resource "aws_s3_bucket_ownership_controls" "this" {
-  count  = var.enable_website ? 1 : 0
+  count  = (var.enable_website || var.is_public) ? 1 : 0
   bucket = aws_s3_bucket.this.id
   rule {
     object_ownership = "BucketOwnerPreferred"
