@@ -63,8 +63,9 @@ resource "aws_apigatewayv2_route" "this" {
   target    = "integrations/${aws_apigatewayv2_integration.this[each.key].id}"
 
   # Eğer use_authorization = true ise, bu özelliği kullanabilirsiniz
-  authorization_type = var.cognito_user_pool_issuer != "" ? each.value.use_authorization ? "JWT" : null : null
-  authorizer_id      = var.cognito_user_pool_issuer != "" ? each.value.use_authorization ? aws_apigatewayv2_authorizer.cognito_authorizer.id : null : null
+  count              = var.cognito_user_pool_issuer != "" ? 1 : 0
+  authorization_type = each.value.use_authorization ? "JWT" : null
+  authorizer_id      = each.value.use_authorization ? aws_apigatewayv2_authorizer.cognito_authorizer.id : null
 
 }
 # bu belki lambda modülüne taşınabilir ama integration yoksa bu yok bu nedenle burada durması daha mantıklı
