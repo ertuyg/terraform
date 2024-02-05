@@ -80,6 +80,7 @@ resource "aws_lambda_permission" "this" {
 
 
 resource "aws_apigatewayv2_authorizer" "cognito_authorizer" {
+  count            = var.cognito_user_pool_issuer != "" ? 1 : 0
   api_id           = aws_apigatewayv2_api.this.id
   authorizer_type  = "JWT"
   identity_sources = ["$request.header.Authorization"]
