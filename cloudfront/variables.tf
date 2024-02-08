@@ -7,7 +7,7 @@ variable "tags" {
   description = "A mapping of tags to assign to the bucket."
   type        = map(string)
   default = {
-    "Name" = "${var.bucket_name} cloudfront distribution"
+    "Name" = "cloudfront distribution"
   }
 }
 
