@@ -1,3 +1,11 @@
+resource "aws_cloudfront_origin_access_control" "this" {
+  name                              = var.aws_cloudfront_origin_access_control_name
+  description                       = "Allow CloudFront access to the S3 bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_s3_bucket" "this" {
   bucket = var.bucket_name
 
@@ -11,8 +19,8 @@ resource "aws_s3_bucket_acl" "this" {
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-    domain_name              = aws_s3_bucket.b.bucket_regional_domain_name
-    origin_access_control_id = aws_cloudfront_origin_access_control.default.id
+    domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.this.id
     origin_id                = var.s3_origin_id
   }
 

@@ -28,3 +28,8 @@ variable "Environment" {
   default     = "dev"
 
 }
+
+variable "aws_cloudfront_origin_access_control_name" {
+  description = "The name of the origin access control."
+  type        = string
+}
