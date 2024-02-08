@@ -6,21 +6,25 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
+# resource "aws_cloudfront_origin_access_identity" "this" {
+#   comment = "origin identity"
+# }
+
 data "aws_s3_bucket" "this" {
   bucket = var.bucket_name
 }
 
-data "aws_iam_policy_document" "s3_policy" {
-  statement {
-    actions   = ["s3:GetObject"]
-    resources = ["${data.aws_s3_bucket.this.arn}/*"]
+# data "aws_iam_policy_document" "s3_policy" {
+#   statement {
+#     actions   = ["s3:GetObject"]
+#     resources = ["${data.aws_s3_bucket.this.arn}/*"]
 
-    principals {
-      type        = "AWS"
-      identifiers = [aws_cloudfront_origin_access_control.this.iam_arn]
-    }
-  }
-}
+#     principals {
+#       type        = "AWS"
+#       identifiers = [aws_cloudfront_origin_access_identity.this.iam_arn]
+#     }
+#   }
+# }
 
 resource "aws_s3_bucket_policy" "s3_policy" {
   bucket = data.aws_s3_bucket.this.id
@@ -34,10 +38,19 @@ resource "aws_s3_bucket_policy" "s3_policy" {
 #   tags = var.tags
 # }
 
-# resource "aws_s3_bucket_acl" "this" {
-#   bucket = aws_s3_bucket.this.id
-#   acl    = "private"
-# }
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = data.aws_s3_bucket.this.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "example" {
+  depends_on = [aws_s3_bucket_ownership_controls.this]
+
+  bucket = data.aws_s3_bucket.this.id
+  acl    = "private"
+}
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
