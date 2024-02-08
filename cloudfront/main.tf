@@ -13,7 +13,7 @@ data "aws_s3_bucket" "this" {
 data "aws_iam_policy_document" "s3_policy" {
   statement {
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.this.arn}/*"]
+    resources = ["${data.aws_s3_bucket.this.arn}/*"]
 
     principals {
       type        = "AWS"
@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "s3_policy" {
 }
 
 resource "aws_s3_bucket_policy" "s3_policy" {
-  bucket = aws_s3_bucket.this.id
+  bucket = data.aws_s3_bucket.this.id
   policy = data.aws_iam_policy_document.s3_policy.json
 }
 
@@ -41,7 +41,7 @@ resource "aws_s3_bucket_policy" "s3_policy" {
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-    domain_name              = aws_s3_bucket.this.bucket_regional_domain_name
+    domain_name              = data.aws_s3_bucket.this.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
     origin_id                = var.s3_origin_id
   }
