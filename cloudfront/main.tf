@@ -6,7 +6,7 @@ resource "aws_cloudfront_origin_access_control" "this" {
   signing_protocol                  = "sigv4"
 }
 
-data "aws_S3_bucket" "this" {
+data "aws_s3_bucket" "this" {
   bucket = var.bucket_name
 }
 
