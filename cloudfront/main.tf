@@ -1,5 +1,5 @@
 resource "aws_cloudfront_origin_access_control" "this" {
-  name                              = var.aws_cloudfront_origin_access_control_name
+  name                              = var.origin_access_control_name
   description                       = "Allow CloudFront access to the S3 bucket"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
