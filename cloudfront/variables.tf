@@ -34,13 +34,13 @@ variable "origin_access_control_name" {
   type        = string
 }
 
-variable "origins" {
-  description = "A list of origin objects for this distribution."
-  type = list(object({
-    domain_name              = string
-    origin_id                = string
-    origin_path              = string
-    origin_access_control_id = string
-  }))
+# variable "origins" {
+#   description = "A list of origin objects for this distribution."
+#   type = list(object({
+#     domain_name              = string
+#     origin_id                = string
+#     origin_path              = string
+#     origin_access_control_id = string
+#   }))
 
-}
+# }
