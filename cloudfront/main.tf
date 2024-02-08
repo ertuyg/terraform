@@ -35,25 +35,12 @@ data "aws_iam_policy_document" "s3_bucket_policy" {
   }
 }
 
-# resource "aws_s3_bucket_ownership_controls" "this" {
-#   bucket = data.aws_s3_bucket.this.id
-#   rule {
-#     object_ownership = "BucketOwnerPreferred"
-#   }
-# }
-
-# resource "aws_s3_bucket_acl" "example" {
-#   depends_on = [aws_s3_bucket_ownership_controls.this]
-
-#   bucket = data.aws_s3_bucket.this.id
-#   acl    = "private"
-# }
-
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name              = data.aws_s3_bucket.this.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.this.id
     origin_id                = var.s3_origin_id
+    origin_path              = "/images"
   }
 
   enabled         = true
@@ -89,27 +76,27 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 
   # Cache behavior with precedence 0
-  ordered_cache_behavior {
-    path_pattern     = "/content/immutable/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = var.s3_origin_id
+  #   ordered_cache_behavior {
+  #     path_pattern     = "/content/immutable/*"
+  #     allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+  #     cached_methods   = ["GET", "HEAD", "OPTIONS"]
+  #     target_origin_id = var.s3_origin_id
 
-    forwarded_values {
-      query_string = false
-      headers      = ["Origin"]
+  #     forwarded_values {
+  #       query_string = false
+  #       headers      = ["Origin"]
 
-      cookies {
-        forward = "none"
-      }
-    }
+  #       cookies {
+  #         forward = "none"
+  #       }
+  #     }
 
-    min_ttl                = 0
-    default_ttl            = 86400
-    max_ttl                = 31536000
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-  }
+  #     min_ttl                = 0
+  #     default_ttl            = 86400
+  #     max_ttl                = 31536000
+  #     compress               = true
+  #     viewer_protocol_policy = "redirect-to-https"
+  #   }
 
   # Cache behavior with precedence 1
   ordered_cache_behavior {
