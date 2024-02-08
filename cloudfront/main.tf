@@ -14,43 +14,40 @@ data "aws_s3_bucket" "this" {
   bucket = var.bucket_name
 }
 
-# data "aws_iam_policy_document" "s3_policy" {
-#   statement {
-#     actions   = ["s3:GetObject"]
-#     resources = ["${data.aws_s3_bucket.this.arn}/*"]
+resource "aws_s3_bucket_policy" "cdn-oac-bucket-policy" {
+  bucket = var.bucket_name
+  policy = data.aws_iam_policy_document.s3_bucket_policy.json
+}
 
-#     principals {
-#       type        = "AWS"
-#       identifiers = [aws_cloudfront_origin_access_identity.this.iam_arn]
-#     }
-#   }
-# }
-
-# resource "aws_s3_bucket_policy" "s3_policy" {
-#   bucket = data.aws_s3_bucket.this.id
-#   policy = data.aws_iam_policy_document.s3_policy.json
-# }
-
-
-# resource "aws_s3_bucket" "this" {
-#   bucket = var.bucket_name
-
-#   tags = var.tags
-# }
-
-resource "aws_s3_bucket_ownership_controls" "this" {
-  bucket = data.aws_s3_bucket.this.id
-  rule {
-    object_ownership = "BucketOwnerPreferred"
+data "aws_iam_policy_document" "s3_bucket_policy" {
+  statement {
+    actions   = ["s3:GetObject"]
+    resources = ["${data.aws_s3_bucket.this.arn}/*"]
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.s3_distribution.arn]
+    }
   }
 }
 
-resource "aws_s3_bucket_acl" "example" {
-  depends_on = [aws_s3_bucket_ownership_controls.this]
+# resource "aws_s3_bucket_ownership_controls" "this" {
+#   bucket = data.aws_s3_bucket.this.id
+#   rule {
+#     object_ownership = "BucketOwnerPreferred"
+#   }
+# }
 
-  bucket = data.aws_s3_bucket.this.id
-  acl    = "private"
-}
+# resource "aws_s3_bucket_acl" "example" {
+#   depends_on = [aws_s3_bucket_ownership_controls.this]
+
+#   bucket = data.aws_s3_bucket.this.id
+#   acl    = "private"
+# }
 
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
