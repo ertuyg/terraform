@@ -11,6 +11,7 @@ variable "handler" {
 variable "runtime" {
   description = "The runtime environment for the Lambda function"
   type        = string
+  default     = "nodejs20.x"
 }
 
 variable "api_gateway_arn" {
