@@ -15,6 +15,6 @@ resource "aws_lambda_layer_version" "this" {
 data "archive_file" "this" {
   type        = "zip"
   source_dir  = var.source_path
-  output_path = "${path.module}/s3_archives/layers/${var.name}.zip"
+  output_path = "s3_archives/layers/${var.name}.zip"
 }
 

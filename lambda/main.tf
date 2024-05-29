@@ -2,7 +2,7 @@ data "archive_file" "this" {
   type        = "zip"
   source_dir  = can(file(var.source_path)) ? null : var.source_path
   source_file = can(file(var.source_path)) ? var.source_path : null
-  output_path = "${path.module}/s3_archives/lambda/${var.function_name}.zip"
+  output_path = "s3_archives/lambda/${var.function_name}.zip"
 }
 
 resource "aws_lambda_function" "this" {
@@ -20,12 +20,12 @@ resource "aws_lambda_function" "this" {
   }
 
   layers = var.layers
-  lifecycle {
-    ignore_changes = [
-      filename,
-      # source_code_hash,
-    ]
-  }
+  # lifecycle {
+  #   ignore_changes = [
+  #     filename,
+  #     # source_code_hash,
+  #   ]
+  # }
 }
 
 resource "aws_iam_role" "lambda_execution_role" {
