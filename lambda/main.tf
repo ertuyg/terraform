@@ -2,7 +2,7 @@ data "archive_file" "this" {
   type        = "zip"
   source_dir  = can(file(var.source_path)) ? null : var.source_path
   source_file = can(file(var.source_path)) ? var.source_path : null
-  output_path = "s3_archives/lambda/${var.function_name}.zip"
+  output_path = "${path.module}/s3_archives/lambda/${var.function_name}.zip"
 }
 
 resource "aws_lambda_function" "this" {
