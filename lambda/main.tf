@@ -22,8 +22,8 @@ resource "aws_lambda_function" "this" {
   layers = var.layers
   lifecycle {
     ignore_changes = [
-      # filename,
-      source_code_hash,
+      filename,
+      # source_code_hash,
     ]
   }
 }
