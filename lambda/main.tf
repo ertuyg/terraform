@@ -20,12 +20,12 @@ resource "aws_lambda_function" "this" {
   }
 
   layers = var.layers
-  # lifecycle {
-  #   ignore_changes = [
-  #     filename,
-  #     source_code_hash,
-  #   ]
-  # }
+  lifecycle {
+    ignore_changes = [
+      # filename,
+      source_code_hash,
+    ]
+  }
 }
 
 resource "aws_iam_role" "lambda_execution_role" {
