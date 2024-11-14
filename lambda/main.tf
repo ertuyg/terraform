@@ -20,11 +20,13 @@ resource "aws_lambda_function" "this" {
   }
 
   layers = var.layers
+  # lifecycle {
+  #   ignore_changes = [
+  #     filename,
+  #     # source_code_hash,
+  #   ]
+  # }
 
-  # `last_modified` değişikliklerini yoksaymak için:
-  lifecycle {
-    ignore_changes = [last_modified]
-  }
 }
 
 resource "aws_iam_role" "lambda_execution_role" {
