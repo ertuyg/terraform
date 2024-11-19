@@ -1,9 +1,20 @@
 
 resource "aws_s3_bucket" "this" {
   bucket = var.bucket_name
+
 }
 
+resource "aws_s3_bucket_cors_configuration" "example_cors" {
+  count  = var.enable_cors ? 1 : 0
+  bucket = aws_s3_bucket.this.id
 
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "POST", "DELETE"]
+    allowed_origins = var.cors_allowed_origins
+    expose_headers  = []
+  }
+}
 
 resource "aws_s3_bucket_website_configuration" "this" {
   count  = var.enable_website ? 1 : 0

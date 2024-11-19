@@ -10,6 +10,18 @@ variable "enable_website" {
   default     = false
 }
 
+variable "enable_cors" {
+  description = "Enable the S3 bucket CORS"
+  type        = bool
+  default     = false
+}
+
+variable "cors_allowed_origins" {
+  description = "The list of allowed origins for CORS"
+  type        = list(string)
+  default     = []
+}
+
 variable "website_configuration_index_document" {
   description = "The name of the index document."
   type        = string
