@@ -17,5 +17,5 @@ variable "description" {
 variable "compatible_runtimes" {
   description = "The runtimes that the Layer is compatible with"
   type        = list(string)
-  default     = ["nodejs16.x"]
+  default     = ["nodejs16.x", "nodejs18.x", "nodejs20.x", "nodejs22.x"]
 }
