@@ -26,9 +26,13 @@ resource "aws_lambda_function" "this" {
     variables = var.environment_variables
   }
 
-  dead_letter_config {
-    target_arn = var.dead_letter_config != null ? var.dead_letter_config.target_arn : null
+  dynamic "dead_letter_config" {
+    for_each = var.dead_letter_config != null ? [var.dead_letter_config] : []
+    content {
+      target_arn = dead_letter_config.value.target_arn
+    }
   }
+
 
   layers = var.layers
   # lifecycle {
