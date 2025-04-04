@@ -26,6 +26,10 @@ resource "aws_lambda_function" "this" {
     variables = var.environment_variables
   }
 
+  dead_letter_config {
+    target_arn = var.dead_letter_config != null ? var.dead_letter_config.target_arn : null
+  }
+
   layers = var.layers
   # lifecycle {
   #   ignore_changes = [
