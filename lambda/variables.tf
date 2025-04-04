@@ -55,3 +55,12 @@ variable "lambda_timeout" {
   type        = number
   default     = 5
 }
+
+variable "dead_letter_config" {
+  description = "The dead letter configuration for the Lambda function."
+  type = object({
+    target_arn = string
+  })
+  default = null
+
+}
