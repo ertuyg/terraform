@@ -9,8 +9,8 @@ resource "aws_sns_topic_subscription" "this" {
   protocol  = each.value.protocol
   endpoint  = each.value.endpoint
 
-  raw_message_delivery = contains(keys(each.value), "raw_message_delivery") ? each.value.raw_message_delivery : null
-  filter_policy        = contains(keys(each.value), "filter_policy") ? jsonencode(each.value.filter_policy) : null
+  # raw_message_delivery = contains(keys(each.value), "raw_message_delivery") ? each.value.raw_message_delivery : null
+  # filter_policy        = contains(keys(each.value), "filter_policy") ? jsonencode(each.value.filter_policy) : null
 }
 
 resource "aws_iam_policy" "this" {
