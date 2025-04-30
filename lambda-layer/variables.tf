@@ -19,3 +19,9 @@ variable "compatible_runtimes" {
   type        = list(string)
   default     = ["nodejs16.x", "nodejs18.x", "nodejs20.x", "nodejs22.x"]
 }
+
+variable "use_existing_zip" {
+  description = "Whether to use an existing zip file instead of creating a new one"
+  type        = bool
+  default     = false
+}
