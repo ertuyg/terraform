@@ -29,7 +29,7 @@ data "archive_file" "this" {
 resource "aws_lambda_layer_version" "this" {
   layer_name          = var.name
   filename            = var.use_existing_zip ? var.zip_path : data.archive_file.this[0].output_path
-  source_code_hash    = var.use_existing_zip ? filesha256(var.zip_path) : data.archive_file.this[0].output_base64sha256
+  source_code_hash    = var.use_existing_zip ? filebase64sha256(var.zip_path) : data.archive_file.this[0].output_base64sha256
   description         = var.description
   compatible_runtimes = var.compatible_runtimes
 }
