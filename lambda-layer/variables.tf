@@ -25,3 +25,9 @@ variable "use_existing_zip" {
   type        = bool
   default     = false
 }
+
+variable "zip_path" {
+  description = "Eğer hazır zip kullanılacaksa, dosya path'i"
+  type        = string
+  default     = ""
+}
