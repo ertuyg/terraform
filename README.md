@@ -72,6 +72,7 @@ Key inputs (see `cognito/variables.tf` for full list):
 - `explicit_auth_flows` (list(string))
 - `schema` and `recovery_mechanism` (advanced)
 - Pre Token Generation trigger:
+  - `enable_pre_token_generation` (bool): Explicitly enable trigger resources (default `false`)
   - `pre_token_generation_lambda_arn` (string|null): Lambda ARN to enable trigger (optional)
   - `pre_token_generation_lambda_version` (string): `V1_0` or `V2_0` (default `V2_0`)
 
@@ -90,13 +91,14 @@ user_pool_name  = "my-user-pool"
 client_name     = "my-web-client"
 
 # Optional Pre Token Generation trigger
+enable_pre_token_generation         = true
 pre_token_generation_lambda_arn     = "arn:aws:lambda:eu-central-1:123456789012:function:pre-token-customizer"
 pre_token_generation_lambda_version = "V2_0"
 ```
 
 Notes:
 
-- When `pre_token_generation_lambda_arn` is set, the module configures `lambda_config.pre_token_generation_config` and grants invoke permission to Cognito via `aws_lambda_permission`.
+- When `enable_pre_token_generation = true`, the module configures `lambda_config.pre_token_generation_config` and grants invoke permission to Cognito via `aws_lambda_permission`. Use this flag to avoid plan-time indeterminism if your Lambda ARN is computed.
 
 #### 2) `lambda`
 
