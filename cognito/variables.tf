@@ -169,3 +169,15 @@ variable "recovery_mechanism" {
   ]
 }
 
+variable "pre_token_generation_lambda_arn" {
+  description = "Lambda ARN to use for Cognito Pre Token Generation trigger (optional)"
+  type        = string
+  default     = null
+}
+
+variable "pre_token_generation_lambda_version" {
+  description = "Lambda trigger version for Pre Token Generation (e.g., V2_0). Ignored when ARN is null."
+  type        = string
+  default     = "V2_0"
+}
+
