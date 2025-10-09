@@ -136,37 +136,190 @@ Tip: If you want Cognito to call this function as the Pre Token Generation trigg
 
 #### 3) `lambda-layer`
 
-Packages and publishes a Lambda Layer from a local directory.
+Packages and publishes a Lambda Layer from a local directory or zip.
 
-Inputs typically include layer name, description, compatible runtimes, and source path (directory or zip). Use the resulting Layer ARN in the `lambda` stack via the `layers` input.
+Typical inputs:
+
+- `layer_name` (string)
+- `description` (string)
+- `compatible_runtimes` (list(string)) – e.g., `["nodejs20.x", "python3.11"]`
+- `source_path` (string) – directory to package or a prebuilt zip
+- `license_info` (string) – optional
+
+Outputs:
+
+- Layer ARN and version (as defined by the stack)
+
+Example `terraform.tfvars`:
+
+```hcl
+layer_name          = "common-deps"
+description         = "Shared libraries"
+compatible_runtimes = ["nodejs20.x"]
+source_path         = "./layers/common-deps"
+```
 
 #### 4) `apigw`
 
-Creates an API Gateway (config details depend on the stack). Typically you’ll wire Lambda integrations by passing Lambda ARNs or via IAM permissions. Check the stack’s `variables.tf` for inputs and provide your `terraform.tfvars` accordingly.
+Creates an API Gateway. You typically wire Lambda integrations by passing Lambda ARNs and enabling IAM permissions.
+
+Typical inputs:
+
+- `api_name` (string)
+- `stage_name` (string)
+- `description` (string)
+- `endpoint_type` (string) – e.g., `REGIONAL`
+- Integration inputs (Lambda ARNs, routes) as exposed by the stack
+
+Outputs:
+
+- API ID/ARN, invoke URL, stage variables (as defined by the stack)
+
+Example `terraform.tfvars`:
+
+```hcl
+api_name     = "my-api"
+stage_name   = "dev"
+endpoint_type = "REGIONAL"
+```
 
 #### 5) `cloudfront`
 
-Creates a CloudFront distribution. Often used together with `s3` (as an origin) and `acm` (not shown here) for SSL. Configure origins, behaviors, and optional OAC/OAI as exposed by the stack’s inputs.
+Creates a CloudFront distribution. Often used with `s3` as an origin and ACM for HTTPS.
+
+Typical inputs:
+
+- `distribution_comment` (string)
+- `origins` (list(object)) – domain name, origin ID, optional OAC/OAI
+- `default_cache_behavior` (object)
+- `viewer_certificate` (object) – ACM cert ARN and SSL settings
+- `price_class` (string)
+
+Outputs:
+
+- Distribution ID/ARN and domain name
+
+Example `terraform.tfvars`:
+
+```hcl
+distribution_comment = "web-static"
+price_class          = "PriceClass_100"
+# origins, cache behaviors, viewer_certificate per your needs
+```
 
 #### 6) `s3`
 
-Creates S3 bucket(s). Provide bucket names, versioning, encryption, public access block, lifecycle, etc., via the stack inputs.
+Creates S3 bucket(s) with common options.
+
+Typical inputs:
+
+- `bucket_name` (string)
+- `versioning_enabled` (bool)
+- `server_side_encryption` (object)
+- `block_public_access` (bool)
+- `lifecycle_rules` (list(object))
+
+Outputs:
+
+- Bucket name, ARN, domain name
+
+Example `terraform.tfvars`:
+
+```hcl
+bucket_name          = "my-static-site-bucket"
+versioning_enabled   = true
+block_public_access  = true
+```
 
 #### 7) `dynamodb`
 
-Creates DynamoDB table(s). Configure table name(s), hash/range keys, billing mode, TTL, GSIs/LSIs via inputs.
+Creates DynamoDB table(s) with indexes and TTL.
+
+Typical inputs:
+
+- `table_name` (string)
+- `billing_mode` (string) – `PAY_PER_REQUEST` or `PROVISIONED`
+- `hash_key` (string)
+- `range_key` (string|null)
+- `attributes` (list(object)) – name/type definitions
+- `ttl` (object) – attribute name and enabled flag
+- `global_secondary_indexes` / `local_secondary_indexes`
+
+Outputs:
+
+- Table name, ARN, stream ARN
+
+Example `terraform.tfvars`:
+
+```hcl
+table_name   = "users"
+billing_mode = "PAY_PER_REQUEST"
+hash_key     = "userId"
+attributes = [
+  { name = "userId", type = "S" }
+]
+```
 
 #### 8) `sns`
 
-Creates SNS topic(s) and optional subscriptions. Use the topic ARNs to publish from Lambda or other services.
+Creates SNS topic(s) and optional subscriptions.
+
+Typical inputs:
+
+- `topics` (list(object)) – name, display name
+- `subscriptions` (list(object)) – protocol, endpoint, topic
+
+Outputs:
+
+- Topic ARNs
+
+Example `terraform.tfvars`:
+
+```hcl
+topics = [
+  { name = "alerts", display_name = "Alerts" }
+]
+```
 
 #### 9) `sqs`
 
-Creates SQS queue(s) (standard or FIFO) with visibility timeout, DLQ config, redrive policies, etc.
+Creates SQS queue(s) with DLQ and redrive policies.
+
+Typical inputs:
+
+- `queues` (list(object)) – name, fifo, visibility timeout, message retention
+- `redrive_policies` (list(object)) – DLQ wiring
+
+Outputs:
+
+- Queue URLs and ARNs
+
+Example `terraform.tfvars`:
+
+```hcl
+queues = [
+  { name = "jobs", fifo = false, visibility_timeout_seconds = 30 }
+]
+```
 
 #### 10) `iam`
 
-Defines IAM roles and/or policies used across services. You can attach these policies to Lambdas or other resources as needed.
+Defines IAM roles and/or policies used across services.
+
+Typical inputs:
+
+- `policies` (map(string|object)) – inline or managed policies to create/attach
+- `roles` (list(object)) – assume role policy docs, attached policies
+
+Outputs:
+
+- Role names/ARNs and policy ARNs
+
+Example `terraform.tfvars`:
+
+```hcl
+# Example: no-op or define policies/roles as your stack exposes
+```
 
 ---
 
