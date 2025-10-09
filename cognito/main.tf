@@ -66,7 +66,7 @@ resource "aws_cognito_user_pool" "this" {
   }
 
   dynamic "lambda_config" {
-    for_each = var.pre_token_generation_lambda_arn == null ? [] : [1]
+    for_each = var.enable_pre_token_generation ? [1] : []
     content {
       pre_token_generation_config {
         lambda_arn     = var.pre_token_generation_lambda_arn
@@ -99,7 +99,7 @@ resource "aws_cognito_user_pool_client" "this" {
 
 # Allow Cognito to invoke the Pre Token Generation Lambda when configured
 resource "aws_lambda_permission" "pre_token_generation_invoke" {
-  count = var.pre_token_generation_lambda_arn == null ? 0 : 1
+  count = var.enable_pre_token_generation ? 1 : 0
 
   statement_id  = "AllowExecutionFromCognitoPreTokenGeneration"
   action        = "lambda:InvokeFunction"

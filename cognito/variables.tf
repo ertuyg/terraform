@@ -181,3 +181,9 @@ variable "pre_token_generation_lambda_version" {
   default     = "V2_0"
 }
 
+variable "enable_pre_token_generation" {
+  description = "Explicitly enable Pre Token Generation trigger resources (useful when ARN is computed)."
+  type        = bool
+  default     = false
+}
+
