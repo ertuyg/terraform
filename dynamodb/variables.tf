@@ -58,3 +58,15 @@ variable "global_secondary_indexes" {
   }))
   default = []
 }
+
+variable "ttl_enabled" {
+  description = "Whether TTL is enabled for the DynamoDB table"
+  type        = bool
+  default     = false
+}
+
+variable "ttl_attribute_name" {
+  description = "Name of the TTL attribute"
+  type        = string
+  default     = "ttl"
+}

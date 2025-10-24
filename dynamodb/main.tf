@@ -37,6 +37,13 @@ resource "aws_dynamodb_table" "this" {
     }
   }
 
+  dynamic "ttl" {
+    for_each = var.ttl_enabled ? [1] : []
+    content {
+      attribute_name = var.ttl_attribute_name
+      enabled        = var.ttl_enabled
+    }
+  }
 
   # stream_enabled   = true
   # stream_view_type = "NEW_AND_OLD_IMAGES"
