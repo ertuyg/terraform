@@ -37,6 +37,18 @@ resource "aws_dynamodb_table" "this" {
     }
   }
 
+  # TTL attribute'unu otomatik ekle
+  dynamic "attribute" {
+    for_each = var.ttl_enabled ? [{
+      name = var.ttl_attribute_name
+      type = "N" # TTL için Number tipi gerekli
+    }] : []
+    content {
+      name = attribute.value.name
+      type = attribute.value.type
+    }
+  }
+
   dynamic "ttl" {
     for_each = var.ttl_enabled ? [1] : []
     content {
@@ -52,7 +64,7 @@ resource "aws_dynamodb_table" "this" {
 
 
 resource "aws_iam_policy" "readwrite" {
-  name        = "DynamoDBModify-${var.table_name}"
+  name        = "ddb_rw-${var.table_name}"
   description = "Allows modification for DynamoDB table ${var.table_name}"
 
   policy = jsonencode({
@@ -80,7 +92,7 @@ resource "aws_iam_policy" "readwrite" {
 }
 
 resource "aws_iam_policy" "readonly" {
-  name        = "DynamoDBReadonly-${var.table_name}"
+  name        = "ddb_ro-${var.table_name}"
   description = "Allows readonly for DynamoDB table ${var.table_name}"
 
   policy = jsonencode({

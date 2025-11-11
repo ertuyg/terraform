@@ -8,7 +8,7 @@ resource "aws_sqs_queue" "this" {
 }
 
 resource "aws_iam_policy" "this" {
-  name        = "LambdaSQSPolicy-${var.queue_name}"
+  name        = "l_sqs-${var.queue_name}"
   description = "Policy for Lambda to access SQS"
 
   policy = jsonencode({

@@ -14,7 +14,7 @@ resource "aws_sns_topic_subscription" "this" {
 }
 
 resource "aws_iam_policy" "this" {
-  name        = "LambdaSNSTopicPolicy-${var.topic_name}"
+  name        = "l_sns-${var.topic_name}"
   description = "Policy for Lambda to access SNS"
 
   policy = jsonencode({
