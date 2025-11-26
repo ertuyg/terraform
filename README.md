@@ -185,27 +185,95 @@ endpoint_type = "REGIONAL"
 
 #### 5) `cloudfront`
 
-Creates a CloudFront distribution. Often used with `s3` as an origin and ACM for HTTPS.
+Creates a CloudFront distribution with support for multiple S3 origins and dynamic cache behaviors. Features automatic Origin Access Control (OAC) creation and backward compatibility with legacy single-origin setup.
 
-Typical inputs:
+**Key Features:**
 
-- `distribution_comment` (string)
-- `origins` (list(object)) – domain name, origin ID, optional OAC/OAI
-- `default_cache_behavior` (object)
-- `viewer_certificate` (object) – ACM cert ARN and SSL settings
-- `price_class` (string)
+- Multi-origin support (multiple S3 buckets)
+- Dynamic ordered cache behaviors per path pattern
+- Automatic OAC creation with custom naming
+- Support for existing OAC resources
+- Backward compatible with legacy single-origin mode
 
-Outputs:
+**Typical inputs:**
 
-- Distribution ID/ARN and domain name
+- **Legacy Mode (single origin):**
 
-Example `terraform.tfvars`:
+  - `bucket_name` (string): S3 bucket name
+  - `s3_origin_id` (string): Origin identifier
+  - `origin_access_control_name` (string): OAC name
+
+- **Multi-Origin Mode:**
+
+  - `origins` (list(object)): List of S3 origins
+    - `bucket_name` (required)
+    - `origin_id` (required)
+    - `origin_path` (optional)
+    - `origin_access_control_name` (optional, auto-generated if not provided)
+    - `origin_access_control_id` (optional, use existing OAC)
+  - `ordered_cache_behaviors` (list(object)): Cache behaviors per path
+    - `path_pattern`, `target_origin_id`, `viewer_protocol_policy`
+    - `compress`, `allowed_methods`, TTL settings
+    - `query_string`, `cookies_forward`
+
+- **Common:**
+  - `aliases` (list(string)): Custom domain names
+  - `Environment` (string): Environment tag
+
+**Outputs:**
+
+- `cloudfront_distribution_id`
+- `cloudfront_distribution_arn`
+- `cloudfront_distribution_domain_name`
+
+**Example `terraform.tfvars` (Legacy):**
 
 ```hcl
-distribution_comment = "web-static"
-price_class          = "PriceClass_100"
-# origins, cache behaviors, viewer_certificate per your needs
+bucket_name                = "my-static-site"
+s3_origin_id               = "S3-my-bucket"
+origin_access_control_name = "my-oac"
+aliases                    = ["www.example.com"]
 ```
+
+**Example `terraform.tfvars` (Multi-Origin):**
+
+```hcl
+origins = [
+  {
+    bucket_name = "images-bucket"
+    origin_id   = "S3-images"
+    # OAC auto-created as "S3-images-oac"
+  },
+  {
+    bucket_name = "videos-bucket"
+    origin_id   = "S3-videos"
+  }
+]
+
+ordered_cache_behaviors = [
+  {
+    path_pattern           = "/images/*"
+    target_origin_id       = "S3-images"
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+    min_ttl                = 86400  # 1 day
+  },
+  {
+    path_pattern     = "/videos/*"
+    target_origin_id = "S3-videos"
+    compress         = false
+    min_ttl          = 3600  # 1 hour
+  }
+]
+
+aliases = ["cdn.example.com"]
+```
+
+**Notes:**
+
+- S3 buckets must exist before applying (module doesn't create buckets)
+- Each origin gets automatic S3 bucket policy for CloudFront access
+- See `cloudfront/README.md` for detailed documentation and more examples
 
 #### 6) `s3`
 
