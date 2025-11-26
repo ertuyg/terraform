@@ -316,6 +316,139 @@ module "global_cdn" {
 }
 ```
 
+## Migration Guide: Upgrading from Previous Version
+
+If you're upgrading from the previous version of this module (single-origin without `for_each`), you'll need to migrate your Terraform state to avoid recreating resources.
+
+### Why Migration is Needed
+
+The module has been refactored from:
+```hcl
+resource "aws_cloudfront_origin_access_control" "this" { ... }
+```
+
+To:
+```hcl
+resource "aws_cloudfront_origin_access_control" "this" {
+  for_each = local.oac_to_create
+  ...
+}
+```
+
+Terraform treats these as different resources, so without migration, it will try to destroy the old OAC and create a new one.
+
+### Migration Steps
+
+Run these commands in your project directory (where you call the cloudfront module):
+
+#### Step 1: Find Your Origin ID
+
+```bash
+# Check your current configuration
+grep s3_origin_id terraform.tfvars
+# or
+terraform state show 'module.cloudfront.aws_cloudfront_distribution.s3_distribution' | grep origin_id
+```
+
+Example output: `S3-my-bucket-name`
+
+#### Step 2: Migrate State Resources
+
+Replace `YOUR_ORIGIN_ID` with your actual origin ID from Step 1:
+
+```bash
+# Migrate OAC
+terraform state mv \
+  'module.cloudfront.aws_cloudfront_origin_access_control.this' \
+  'module.cloudfront.aws_cloudfront_origin_access_control.this["YOUR_ORIGIN_ID"]'
+
+# Migrate S3 bucket data source
+terraform state mv \
+  'module.cloudfront.data.aws_s3_bucket.this' \
+  'module.cloudfront.data.aws_s3_bucket.this["YOUR_ORIGIN_ID"]'
+
+# Migrate bucket policy
+terraform state mv \
+  'module.cloudfront.aws_s3_bucket_policy.cdn-oac-bucket-policy' \
+  'module.cloudfront.aws_s3_bucket_policy.cdn-oac-bucket-policy["YOUR_ORIGIN_ID"]'
+
+# Migrate IAM policy document
+terraform state mv \
+  'module.cloudfront.data.aws_iam_policy_document.s3_bucket_policy' \
+  'module.cloudfront.data.aws_iam_policy_document.s3_bucket_policy["YOUR_ORIGIN_ID"]'
+```
+
+#### Step 3: Verify
+
+```bash
+terraform plan
+```
+
+You should see "No changes" or only minor attribute changes (not resource recreation).
+
+### Example Migration
+
+If your module call is:
+```hcl
+module "cloudfront" {
+  source                     = "git::https://github.com/yourorg/terraform.git//cloudfront"
+  bucket_name                = "my-docs-bucket"
+  s3_origin_id               = "S3-my-docs-bucket"
+  origin_access_control_name = "OAC-MyDocs"
+}
+```
+
+Your migration commands would be:
+```bash
+terraform state mv \
+  'module.cloudfront.aws_cloudfront_origin_access_control.this' \
+  'module.cloudfront.aws_cloudfront_origin_access_control.this["S3-my-docs-bucket"]'
+
+terraform state mv \
+  'module.cloudfront.data.aws_s3_bucket.this' \
+  'module.cloudfront.data.aws_s3_bucket.this["S3-my-docs-bucket"]'
+
+terraform state mv \
+  'module.cloudfront.aws_s3_bucket_policy.cdn-oac-bucket-policy' \
+  'module.cloudfront.aws_s3_bucket_policy.cdn-oac-bucket-policy["S3-my-docs-bucket"]'
+
+terraform state mv \
+  'module.cloudfront.data.aws_iam_policy_document.s3_bucket_policy' \
+  'module.cloudfront.data.aws_iam_policy_document.s3_bucket_policy["S3-my-docs-bucket"]'
+```
+
+### CI/CD Considerations
+
+If you're using CI/CD (GitHub Actions, GitLab CI, etc.):
+
+1. **Option A: Manual migration first**
+   - Run migration commands locally
+   - Commit the updated state (if using version-controlled state)
+   - Let CI/CD run with already-migrated state
+
+2. **Option B: Add migration step to CI/CD**
+   - Add a migration job that runs before `terraform apply`
+   - Use conditional logic to run migration only once
+
+3. **Option C: Use remote state locking**
+   - Lock the state
+   - Run migration manually
+   - Unlock and let CI/CD continue
+
+### Troubleshooting
+
+**Error: "Resource not found"**
+- The resource name might be different in your setup
+- Run `terraform state list | grep cloudfront` to see actual resource names
+
+**Error: "Resource already exists at destination"**
+- Migration already completed
+- Run `terraform plan` to verify
+
+**Error: "OriginAccessControlInUse"**
+- This happens if you try to apply without migration
+- Follow the migration steps above
+
 ## Requirements
 
 | Name      | Version |
