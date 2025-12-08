@@ -115,7 +115,7 @@ resource "aws_lambda_permission" "pre_token_generation_invoke" {
 
 
 resource "aws_iam_policy" "admin_policy" {
-  name        = "CognitoAdminPolicy"
+  name        = "${var.user_pool_name}-AdminPolicy"
   description = "Allows admin access to Cognito"
 
   policy = jsonencode(

@@ -323,11 +323,13 @@ If you're upgrading from the previous version of this module (single-origin with
 ### Why Migration is Needed
 
 The module has been refactored from:
+
 ```hcl
 resource "aws_cloudfront_origin_access_control" "this" { ... }
 ```
 
 To:
+
 ```hcl
 resource "aws_cloudfront_origin_access_control" "this" {
   for_each = local.oac_to_create
@@ -389,6 +391,7 @@ You should see "No changes" or only minor attribute changes (not resource recrea
 ### Example Migration
 
 If your module call is:
+
 ```hcl
 module "cloudfront" {
   source                     = "git::https://github.com/yourorg/terraform.git//cloudfront"
@@ -399,6 +402,7 @@ module "cloudfront" {
 ```
 
 Your migration commands would be:
+
 ```bash
 terraform state mv \
   'module.cloudfront.aws_cloudfront_origin_access_control.this' \
@@ -422,11 +426,13 @@ terraform state mv \
 If you're using CI/CD (GitHub Actions, GitLab CI, etc.):
 
 1. **Option A: Manual migration first**
+
    - Run migration commands locally
    - Commit the updated state (if using version-controlled state)
    - Let CI/CD run with already-migrated state
 
 2. **Option B: Add migration step to CI/CD**
+
    - Add a migration job that runs before `terraform apply`
    - Use conditional logic to run migration only once
 
@@ -438,14 +444,17 @@ If you're using CI/CD (GitHub Actions, GitLab CI, etc.):
 ### Troubleshooting
 
 **Error: "Resource not found"**
+
 - The resource name might be different in your setup
 - Run `terraform state list | grep cloudfront` to see actual resource names
 
 **Error: "Resource already exists at destination"**
+
 - Migration already completed
 - Run `terraform plan` to verify
 
 **Error: "OriginAccessControlInUse"**
+
 - This happens if you try to apply without migration
 - Follow the migration steps above
 

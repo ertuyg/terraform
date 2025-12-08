@@ -37,18 +37,6 @@ resource "aws_dynamodb_table" "this" {
     }
   }
 
-  # TTL attribute'unu otomatik ekle
-  dynamic "attribute" {
-    for_each = var.ttl_enabled ? [{
-      name = var.ttl_attribute_name
-      type = "N" # TTL için Number tipi gerekli
-    }] : []
-    content {
-      name = attribute.value.name
-      type = attribute.value.type
-    }
-  }
-
   dynamic "ttl" {
     for_each = var.ttl_enabled ? [1] : []
     content {
