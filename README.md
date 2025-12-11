@@ -59,7 +59,7 @@ terraform workspace select dev
 
 #### 1) `cognito`
 
-Creates a Cognito User Pool and Client with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation trigger.
+Creates a Cognito User Pool and Client with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation trigger and Google Identity Provider (IDP) integration with Hosted UI.
 
 Key inputs (see `cognito/variables.tf` for full list):
 
@@ -75,16 +75,24 @@ Key inputs (see `cognito/variables.tf` for full list):
   - `enable_pre_token_generation` (bool): Explicitly enable trigger resources (default `false`)
   - `pre_token_generation_lambda_arn` (string|null): Lambda ARN to enable trigger (optional)
   - `pre_token_generation_lambda_version` (string): `V1_0` or `V2_0` (default `V2_0`)
+- Google Identity Provider (optional):
+  - `enable_google_idp` (bool): Enable Google as an identity provider (default `false`)
+  - `google_client_id` (string|null, sensitive): Google OAuth client ID
+  - `google_client_secret` (string|null, sensitive): Google OAuth client secret
+  - `callback_urls` (list(string)): OAuth callback URLs for Hosted UI (e.g., `["https://example.com/auth/callback"]`)
+  - `logout_urls` (list(string)): OAuth logout URLs for Hosted UI (e.g., `["https://example.com/"]`)
+  - `cognito_domain_prefix` (string|null): Domain prefix for Cognito Hosted UI (e.g., `"my-app-auth"`)
 
 Outputs (see `cognito/outputs.tf`):
 
 - `user_pool_id`
-- `user_pool_client_id`
+- `user_pool_client_id` (returns Google client ID when Google IDP is enabled, otherwise standard client ID)
 - `user_pool_arn`
 - `user_pool_issuer`
 - `admin_policy_arn`
+- `cognito_domain` (only when Google IDP and domain prefix are configured)
 
-Example `terraform.tfvars`:
+Example `terraform.tfvars` (basic):
 
 ```hcl
 user_pool_name  = "my-user-pool"
@@ -96,9 +104,26 @@ pre_token_generation_lambda_arn     = "arn:aws:lambda:eu-central-1:123456789012:
 pre_token_generation_lambda_version = "V2_0"
 ```
 
+Example `terraform.tfvars` (with Google IDP):
+
+```hcl
+user_pool_name  = "my-user-pool"
+client_name     = "my-web-client"
+
+# Enable Google Identity Provider
+enable_google_idp     = true
+google_client_id      = "your-google-client-id.apps.googleusercontent.com"
+google_client_secret  = "your-google-client-secret"
+callback_urls         = ["https://example.com/auth/callback"]
+logout_urls           = ["https://example.com/"]
+cognito_domain_prefix = "my-app-auth"
+```
+
 Notes:
 
 - When `enable_pre_token_generation = true`, the module configures `lambda_config.pre_token_generation_config` and grants invoke permission to Cognito via `aws_lambda_permission`. Use this flag to avoid plan-time indeterminism if your Lambda ARN is computed.
+- When `enable_google_idp = true`, the module creates a separate Cognito client configured for Hosted UI with OAuth flows, a Google identity provider, and optionally a Cognito domain for the Hosted UI. The `user_pool_client_id` output automatically returns the Google client ID when enabled.
+- The Cognito domain is only created when both `enable_google_idp = true` and `cognito_domain_prefix` is provided.
 
 #### 2) `lambda`
 

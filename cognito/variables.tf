@@ -187,3 +187,37 @@ variable "enable_pre_token_generation" {
   default     = false
 }
 
+variable "enable_google_idp" {
+  type    = bool
+  default = false
+}
+
+variable "google_client_id" {
+  type      = string
+  default   = null
+  sensitive = true
+}
+
+variable "google_client_secret" {
+  type      = string
+  default   = null
+  sensitive = true
+}
+
+variable "callback_urls" {
+  type    = list(string)
+  default = []
+  # örn: ["https://math.energy/auth/callback"]
+}
+
+variable "logout_urls" {
+  type    = list(string)
+  default = []
+  # örn: ["https://math.energy/"]
+}
+
+variable "cognito_domain_prefix" {
+  type    = string
+  default = null
+  # örn: "math-energy-auth"
+}

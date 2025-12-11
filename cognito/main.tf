@@ -39,32 +39,6 @@ resource "aws_cognito_user_pool" "this" {
     }
   }
 
-  schema {
-    attribute_data_type      = "String"
-    developer_only_attribute = false
-    mutable                  = true
-    name                     = "email"
-    required                 = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
-  }
-
-  schema {
-    attribute_data_type      = "String"
-    developer_only_attribute = false
-    mutable                  = true
-    name                     = "name"
-    required                 = true
-
-    string_attribute_constraints {
-      min_length = 1
-      max_length = 256
-    }
-  }
-
   dynamic "lambda_config" {
     for_each = var.enable_pre_token_generation ? [1] : []
     content {
@@ -78,6 +52,8 @@ resource "aws_cognito_user_pool" "this" {
 }
 
 resource "aws_cognito_user_pool_client" "this" {
+  count = var.enable_google_idp ? 0 : 1
+
   name = var.client_name
 
   user_pool_id    = aws_cognito_user_pool.this.id
@@ -95,6 +71,64 @@ resource "aws_cognito_user_pool_client" "this" {
   explicit_auth_flows           = var.explicit_auth_flows
 
 }
+
+resource "aws_cognito_user_pool_client" "google" {
+  count = var.enable_google_idp ? 1 : 0
+
+  name         = "${var.client_name}-google"
+  user_pool_id = aws_cognito_user_pool.this.id
+
+  generate_secret = var.client_generate_secret
+  explicit_auth_flows = var.explicit_auth_flows
+
+  # Hosted UI + Google için zorunlu alanlar
+  allowed_oauth_flows = ["code"]
+  allowed_oauth_scopes = ["openid", "email", "profile"]
+  allowed_oauth_flows_user_pool_client = true
+
+  supported_identity_providers = ["COGNITO", "Google"]
+
+  callback_urls = var.callback_urls
+  logout_urls   = var.logout_urls
+
+  access_token_validity         = var.access_token_validity
+  id_token_validity             = var.id_token_validity
+  refresh_token_validity        = var.refresh_token_validity
+
+  token_validity_units {
+    access_token  = var.access_token_validity_unit
+    id_token      = var.id_token_validity_unit
+    refresh_token = var.refresh_token_validity_unit
+  }
+}
+
+resource "aws_cognito_identity_provider" "google" {
+  count = var.enable_google_idp ? 1 : 0
+
+  user_pool_id = aws_cognito_user_pool.this.id
+  provider_name = "Google"
+  provider_type = "Google"
+
+  provider_details = {
+    client_id       = var.google_client_id
+    client_secret   = var.google_client_secret
+    authorize_scopes = "openid email profile"
+  }
+
+  attribute_mapping = {
+    email = "email"
+    name  = "name"
+  }
+}
+
+
+resource "aws_cognito_user_pool_domain" "this" {
+  count       = var.enable_google_idp && var.cognito_domain_prefix != null ? 1 : 0
+
+  domain      = var.cognito_domain_prefix
+  user_pool_id = aws_cognito_user_pool.this.id
+}
+
 
 
 # Allow Cognito to invoke the Pre Token Generation Lambda when configured
