@@ -2,8 +2,8 @@
 resource "aws_cognito_user_pool" "this" {
   name = var.user_pool_name
 
-  username_attributes      = var.username_attributes
-  auto_verified_attributes = var.auto_verified_attributes
+  username_attributes = var.username_attributes
+  auto_verified_attributes = var.enable_email_verification ? distinct(concat(var.auto_verified_attributes, ["email"])) : var.auto_verified_attributes
   password_policy {
     minimum_length                   = var.minimum_length
     require_lowercase                = var.require_lowercase
@@ -40,12 +40,40 @@ resource "aws_cognito_user_pool" "this" {
   }
 
   dynamic "lambda_config" {
-    for_each = var.enable_pre_token_generation ? [1] : []
+    for_each = (var.enable_pre_token_generation || var.enable_post_confirmation || var.enable_post_authentication) ? [1] : []
     content {
-      pre_token_generation_config {
-        lambda_arn     = var.pre_token_generation_lambda_arn
-        lambda_version = var.pre_token_generation_lambda_version
+      dynamic "pre_token_generation_config" {
+        for_each = var.enable_pre_token_generation ? [1] : []
+        content {
+          lambda_arn     = var.pre_token_generation_lambda_arn
+          lambda_version = var.pre_token_generation_lambda_version
+        }
       }
+
+      dynamic "post_confirmation" {
+        for_each = var.enable_post_confirmation ? [1] : []
+        content {
+          lambda_arn = var.post_confirmation_lambda_arn
+        }
+      }
+
+      dynamic "post_authentication" {
+        for_each = var.enable_post_authentication ? [1] : []
+        content {
+          lambda_arn = var.post_authentication_lambda_arn
+        }
+      }
+    }
+  }
+
+  dynamic "verification_message_template" {
+    for_each = var.verification_message_template != null ? [1] : []
+    content {
+      default_email_option  = var.verification_message_template.default_email_option
+      email_subject          = var.verification_message_template.email_subject
+      email_message          = var.verification_message_template.email_message
+      email_message_by_link  = var.verification_message_template.email_message_by_link
+      sms_message            = var.verification_message_template.sms_message
     }
   }
 
@@ -138,6 +166,36 @@ resource "aws_lambda_permission" "pre_token_generation_invoke" {
   statement_id  = "AllowExecutionFromCognitoPreTokenGeneration"
   action        = "lambda:InvokeFunction"
   function_name = var.pre_token_generation_lambda_arn
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.this.arn
+
+  depends_on = [
+    aws_cognito_user_pool.this
+  ]
+}
+
+# Allow Cognito to invoke the Post Confirmation Lambda when configured
+resource "aws_lambda_permission" "post_confirmation_invoke" {
+  count = var.enable_post_confirmation ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCognitoPostConfirmation"
+  action        = "lambda:InvokeFunction"
+  function_name = var.post_confirmation_lambda_arn
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = aws_cognito_user_pool.this.arn
+
+  depends_on = [
+    aws_cognito_user_pool.this
+  ]
+}
+
+# Allow Cognito to invoke the Post Authentication Lambda when configured
+resource "aws_lambda_permission" "post_authentication_invoke" {
+  count = var.enable_post_authentication ? 1 : 0
+
+  statement_id  = "AllowExecutionFromCognitoPostAuthentication"
+  action        = "lambda:InvokeFunction"
+  function_name = var.post_authentication_lambda_arn
   principal     = "cognito-idp.amazonaws.com"
   source_arn    = aws_cognito_user_pool.this.arn
 

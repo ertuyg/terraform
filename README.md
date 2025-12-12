@@ -59,7 +59,7 @@ terraform workspace select dev
 
 #### 1) `cognito`
 
-Creates a Cognito User Pool and Client with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation trigger and Google Identity Provider (IDP) integration with Hosted UI.
+Creates a Cognito User Pool and Client with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation, Post Confirmation, and Post Authentication triggers, and Google Identity Provider (IDP) integration with Hosted UI.
 
 Key inputs (see `cognito/variables.tf` for full list):
 
@@ -67,6 +67,7 @@ Key inputs (see `cognito/variables.tf` for full list):
 - `client_name` (string): App client name
 - `username_attributes` (list(string)) default `["email"]`
 - `auto_verified_attributes` (list(string)) default `["email"]`
+- `enable_email_verification` (bool): Enable email verification, ensures email is in auto_verified_attributes (default `false`)
 - Password policy inputs: `minimum_length`, `require_lowercase`, `require_numbers`, `require_symbols`, `require_uppercase`, `temporary_password_validity_days`
 - Token validity inputs: `access_token_validity_unit`, `access_token_validity`, `id_token_validity_unit`, `id_token_validity`, `refresh_token_validity_unit`, `refresh_token_validity`
 - `explicit_auth_flows` (list(string))
@@ -75,6 +76,19 @@ Key inputs (see `cognito/variables.tf` for full list):
   - `enable_pre_token_generation` (bool): Explicitly enable trigger resources (default `false`)
   - `pre_token_generation_lambda_arn` (string|null): Lambda ARN to enable trigger (optional)
   - `pre_token_generation_lambda_version` (string): `V1_0` or `V2_0` (default `V2_0`)
+- Post Confirmation trigger:
+  - `enable_post_confirmation` (bool): Explicitly enable trigger resources (default `false`)
+  - `post_confirmation_lambda_arn` (string|null): Lambda ARN to enable trigger (optional)
+- Post Authentication trigger:
+  - `enable_post_authentication` (bool): Explicitly enable trigger resources (default `false`)
+  - `post_authentication_lambda_arn` (string|null): Lambda ARN to enable trigger (optional)
+- Verification message template (optional):
+  - `verification_message_template` (object|null): Custom verification message template
+    - `default_email_option` (string): `CONFIRM_WITH_CODE` or `CONFIRM_WITH_LINK` (default `CONFIRM_WITH_CODE`)
+    - `email_subject` (string|null): Custom email subject
+    - `email_message` (string|null): Custom email message (use `{####}` placeholder for code)
+    - `email_message_by_link` (string|null): Custom email message for link verification (use `{##Verify Email##}` placeholder)
+    - `sms_message` (string|null): Custom SMS message (use `{####}` placeholder for code)
 - Google Identity Provider (optional):
   - `enable_google_idp` (bool): Enable Google as an identity provider (default `false`)
   - `google_client_id` (string|null, sensitive): Google OAuth client ID
@@ -102,6 +116,14 @@ client_name     = "my-web-client"
 enable_pre_token_generation         = true
 pre_token_generation_lambda_arn     = "arn:aws:lambda:eu-central-1:123456789012:function:pre-token-customizer"
 pre_token_generation_lambda_version = "V2_0"
+
+# Optional verification message template
+verification_message_template = {
+  default_email_option = "CONFIRM_WITH_CODE"
+  email_subject         = "Your verification code"
+  email_message         = "Your verification code is {####}"
+  sms_message          = "Your verification code is {####}"
+}
 ```
 
 Example `terraform.tfvars` (with Google IDP):
@@ -121,7 +143,11 @@ cognito_domain_prefix = "my-app-auth"
 
 Notes:
 
+- When `enable_email_verification = true` (default), the module ensures that `email` is included in `auto_verified_attributes`, enabling automatic email verification for new users.
+- When `verification_message_template` is provided, the module configures custom verification messages for email and SMS. Use placeholders: `{####}` for verification code, `{##Verify Email##}` for verification link.
 - When `enable_pre_token_generation = true`, the module configures `lambda_config.pre_token_generation_config` and grants invoke permission to Cognito via `aws_lambda_permission`. Use this flag to avoid plan-time indeterminism if your Lambda ARN is computed.
+- When `enable_post_confirmation = true`, the module configures `lambda_config.post_confirmation` and grants invoke permission to Cognito via `aws_lambda_permission`. This trigger is invoked after a user confirms their account (email or phone verification).
+- When `enable_post_authentication = true`, the module configures `lambda_config.post_authentication` and grants invoke permission to Cognito via `aws_lambda_permission`. This trigger is invoked after a user successfully authenticates (signs in).
 - When `enable_google_idp = true`, the module creates a separate Cognito client configured for Hosted UI with OAuth flows, a Google identity provider, and optionally a Cognito domain for the Hosted UI. The `user_pool_client_id` output automatically returns the Google client ID when enabled.
 - The Cognito domain is only created when both `enable_google_idp = true` and `cognito_domain_prefix` is provided.
 

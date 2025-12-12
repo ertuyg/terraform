@@ -14,9 +14,15 @@ variable "username_attributes" {
 
 
 variable "auto_verified_attributes" {
-  description = "Attributes for username"
+  description = "Attributes to be auto-verified"
   type        = list(string)
   default     = ["email"]
+}
+
+variable "enable_email_verification" {
+  description = "Enable email verification (ensures email is in auto_verified_attributes)"
+  type        = bool
+  default     = false
 }
 
 variable "minimum_length" {
@@ -187,6 +193,30 @@ variable "enable_pre_token_generation" {
   default     = false
 }
 
+variable "post_confirmation_lambda_arn" {
+  description = "Lambda ARN to use for Cognito Post Confirmation trigger (optional)"
+  type        = string
+  default     = null
+}
+
+variable "enable_post_confirmation" {
+  description = "Explicitly enable Post Confirmation trigger resources (useful when ARN is computed)."
+  type        = bool
+  default     = false
+}
+
+variable "post_authentication_lambda_arn" {
+  description = "Lambda ARN to use for Cognito Post Authentication trigger (optional)"
+  type        = string
+  default     = null
+}
+
+variable "enable_post_authentication" {
+  description = "Explicitly enable Post Authentication trigger resources (useful when ARN is computed)."
+  type        = bool
+  default     = false
+}
+
 variable "enable_google_idp" {
   type    = bool
   default = false
@@ -220,4 +250,16 @@ variable "cognito_domain_prefix" {
   type    = string
   default = null
   # örn: "math-energy-auth"
+}
+
+variable "verification_message_template" {
+  description = "Verification message template configuration (optional)"
+  type = object({
+    default_email_option  = optional(string, "CONFIRM_WITH_CODE") # CONFIRM_WITH_CODE or CONFIRM_WITH_LINK
+    email_subject         = optional(string)
+    email_message         = optional(string)
+    email_message_by_link = optional(string)
+    sms_message           = optional(string)
+  })
+  default = null
 }
