@@ -2,7 +2,7 @@
 resource "aws_cognito_user_pool" "this" {
   name = var.user_pool_name
 
-  username_attributes = var.username_attributes
+  username_attributes      = var.username_attributes
   auto_verified_attributes = var.enable_email_verification ? distinct(concat(var.auto_verified_attributes, ["email"])) : var.auto_verified_attributes
   password_policy {
     minimum_length                   = var.minimum_length
@@ -50,19 +50,8 @@ resource "aws_cognito_user_pool" "this" {
         }
       }
 
-      dynamic "post_confirmation" {
-        for_each = var.enable_post_confirmation ? [1] : []
-        content {
-          lambda_arn = var.post_confirmation_lambda_arn
-        }
-      }
-
-      dynamic "post_authentication" {
-        for_each = var.enable_post_authentication ? [1] : []
-        content {
-          lambda_arn = var.post_authentication_lambda_arn
-        }
-      }
+      post_confirmation   = var.enable_post_confirmation ? var.post_confirmation_lambda_arn : null
+      post_authentication = var.enable_post_authentication ? var.post_authentication_lambda_arn : null
     }
   }
 
@@ -70,10 +59,10 @@ resource "aws_cognito_user_pool" "this" {
     for_each = var.verification_message_template != null ? [1] : []
     content {
       default_email_option  = var.verification_message_template.default_email_option
-      email_subject          = var.verification_message_template.email_subject
-      email_message          = var.verification_message_template.email_message
-      email_message_by_link  = var.verification_message_template.email_message_by_link
-      sms_message            = var.verification_message_template.sms_message
+      email_subject         = var.verification_message_template.email_subject
+      email_message         = var.verification_message_template.email_message
+      email_message_by_link = var.verification_message_template.email_message_by_link
+      sms_message           = var.verification_message_template.sms_message
     }
   }
 
@@ -106,12 +95,12 @@ resource "aws_cognito_user_pool_client" "google" {
   name         = "${var.client_name}-google"
   user_pool_id = aws_cognito_user_pool.this.id
 
-  generate_secret = var.client_generate_secret
+  generate_secret     = var.client_generate_secret
   explicit_auth_flows = var.explicit_auth_flows
 
   # Hosted UI + Google için zorunlu alanlar
-  allowed_oauth_flows = ["code"]
-  allowed_oauth_scopes = ["openid", "email", "profile"]
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["openid", "email", "profile"]
   allowed_oauth_flows_user_pool_client = true
 
   supported_identity_providers = ["COGNITO", "Google"]
@@ -119,9 +108,9 @@ resource "aws_cognito_user_pool_client" "google" {
   callback_urls = var.callback_urls
   logout_urls   = var.logout_urls
 
-  access_token_validity         = var.access_token_validity
-  id_token_validity             = var.id_token_validity
-  refresh_token_validity        = var.refresh_token_validity
+  access_token_validity  = var.access_token_validity
+  id_token_validity      = var.id_token_validity
+  refresh_token_validity = var.refresh_token_validity
 
   token_validity_units {
     access_token  = var.access_token_validity_unit
@@ -133,13 +122,13 @@ resource "aws_cognito_user_pool_client" "google" {
 resource "aws_cognito_identity_provider" "google" {
   count = var.enable_google_idp ? 1 : 0
 
-  user_pool_id = aws_cognito_user_pool.this.id
+  user_pool_id  = aws_cognito_user_pool.this.id
   provider_name = "Google"
   provider_type = "Google"
 
   provider_details = {
-    client_id       = var.google_client_id
-    client_secret   = var.google_client_secret
+    client_id        = var.google_client_id
+    client_secret    = var.google_client_secret
     authorize_scopes = "openid email profile"
   }
 
@@ -151,9 +140,9 @@ resource "aws_cognito_identity_provider" "google" {
 
 
 resource "aws_cognito_user_pool_domain" "this" {
-  count       = var.enable_google_idp && var.cognito_domain_prefix != null ? 1 : 0
+  count = var.enable_google_idp && var.cognito_domain_prefix != null ? 1 : 0
 
-  domain      = var.cognito_domain_prefix
+  domain       = var.cognito_domain_prefix
   user_pool_id = aws_cognito_user_pool.this.id
 }
 
