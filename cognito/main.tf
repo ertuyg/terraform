@@ -68,8 +68,10 @@ resource "aws_cognito_user_pool" "this" {
 
 }
 
+# DEPRECATED: Use `var.clients` + `aws_cognito_user_pool_client.clients` instead.
+# Kept only for backward compatibility with older module consumers.
 resource "aws_cognito_user_pool_client" "this" {
-  count = var.enable_google_idp ? 0 : 1
+  count = (var.client_name != null && !var.enable_google_idp) ? 1 : 0
 
   name = var.client_name
 
@@ -89,8 +91,11 @@ resource "aws_cognito_user_pool_client" "this" {
 
 }
 
+# DEPRECATED: Use `var.clients` + `aws_cognito_user_pool_client.clients`
+# with `supported_identity_providers = [\"COGNITO\", \"Google\"]` instead.
+# Kept only for backward compatibility with older module consumers.
 resource "aws_cognito_user_pool_client" "google" {
-  count = var.enable_google_idp ? 1 : 0
+  count = (var.client_name != null && var.enable_google_idp) ? 1 : 0
 
   name         = "${var.client_name}-google"
   user_pool_id = aws_cognito_user_pool.this.id
@@ -119,8 +124,47 @@ resource "aws_cognito_user_pool_client" "google" {
   }
 }
 
+# Preferred multi-client support (backward compatible with legacy clients above)
+resource "aws_cognito_user_pool_client" "clients" {
+  for_each = { for idx, client in var.clients : client.name => client }
+
+  name         = each.value.name
+  user_pool_id = aws_cognito_user_pool.this.id
+
+  generate_secret     = each.value.generate_secret
+  explicit_auth_flows = each.value.explicit_auth_flows
+
+  access_token_validity         = each.value.access_token_validity
+  id_token_validity             = each.value.id_token_validity
+  refresh_token_validity        = each.value.refresh_token_validity
+  prevent_user_existence_errors = each.value.prevent_user_existence_errors
+
+  token_validity_units {
+    access_token  = each.value.access_token_validity_unit
+    id_token      = each.value.id_token_validity_unit
+    refresh_token = each.value.refresh_token_validity_unit
+  }
+
+  # OAuth settings (optional, only if provided)
+  allowed_oauth_flows                  = each.value.allowed_oauth_flows
+  allowed_oauth_scopes                 = each.value.allowed_oauth_scopes
+  allowed_oauth_flows_user_pool_client = each.value.allowed_oauth_flows_user_pool_client
+  supported_identity_providers         = each.value.supported_identity_providers
+  callback_urls                        = each.value.callback_urls
+  logout_urls                          = each.value.logout_urls
+}
+
+# Check if any client uses Google IDP
+locals {
+  clients_using_google = [
+    for client in var.clients :
+    client if client.supported_identity_providers != null && contains(client.supported_identity_providers, "Google")
+  ]
+  has_google_client = var.enable_google_idp || length(local.clients_using_google) > 0
+}
+
 resource "aws_cognito_identity_provider" "google" {
-  count = var.enable_google_idp ? 1 : 0
+  count = local.has_google_client ? 1 : 0
 
   user_pool_id  = aws_cognito_user_pool.this.id
   provider_name = "Google"
@@ -140,7 +184,7 @@ resource "aws_cognito_identity_provider" "google" {
 
 
 resource "aws_cognito_user_pool_domain" "this" {
-  count = var.enable_google_idp && var.cognito_domain_prefix != null ? 1 : 0
+  count = local.has_google_client && var.cognito_domain_prefix != null ? 1 : 0
 
   domain       = var.cognito_domain_prefix
   user_pool_id = aws_cognito_user_pool.this.id

@@ -3,7 +3,9 @@ variable "user_pool_name" {
 }
 
 variable "client_name" {
-  description = "Cognito Client Name"
+  description = "Cognito Client Name (optional - if not provided, only clients will be created)"
+  type        = string
+  default     = null
 }
 
 variable "username_attributes" {
@@ -262,4 +264,27 @@ variable "verification_message_template" {
     sms_message           = optional(string)
   })
   default = null
+}
+
+variable "clients" {
+  description = "Cognito User Pool Clients (optional, for multiple clients support)"
+  type = list(object({
+    name                                 = string
+    generate_secret                      = optional(bool, false)
+    explicit_auth_flows                  = optional(list(string), ["ALLOW_REFRESH_TOKEN_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_ADMIN_USER_PASSWORD_AUTH"])
+    access_token_validity                = optional(number, 10)
+    id_token_validity                    = optional(number, 10)
+    refresh_token_validity               = optional(number, 30)
+    access_token_validity_unit           = optional(string, "hours")
+    id_token_validity_unit               = optional(string, "hours")
+    refresh_token_validity_unit          = optional(string, "days")
+    prevent_user_existence_errors        = optional(string, "ENABLED")
+    allowed_oauth_flows                  = optional(list(string))
+    allowed_oauth_scopes                 = optional(list(string))
+    allowed_oauth_flows_user_pool_client = optional(bool, false)
+    supported_identity_providers         = optional(list(string), ["COGNITO"])
+    callback_urls                        = optional(list(string), [])
+    logout_urls                          = optional(list(string), [])
+  }))
+  default = []
 }

@@ -4,8 +4,30 @@ output "user_pool_id" {
 }
 
 output "user_pool_client_id" {
-  value       = var.enable_google_idp ? aws_cognito_user_pool_client.google[0].id : aws_cognito_user_pool_client.this[0].id
-  description = "Cognito User Pool Client ID"
+  value = var.client_name != null ? (
+    var.enable_google_idp && length(aws_cognito_user_pool_client.google) > 0 ? aws_cognito_user_pool_client.google[0].id : (
+      length(aws_cognito_user_pool_client.this) > 0 ? aws_cognito_user_pool_client.this[0].id : null
+    )
+    ) : (
+    length(var.clients) > 0 ? try(
+      aws_cognito_user_pool_client.clients[var.clients[0].name].id,
+      null
+    )
+    : null
+  )
+  description = "Cognito User Pool Client ID (DEPRECATED - kept for backward compatibility; prefer `user_pool_client_ids`)"
+}
+
+output "user_pool_client_ids" {
+  value = merge(
+    # Default client (when not using Google IDP and client_name is provided)
+    (var.client_name != null && !var.enable_google_idp && length(aws_cognito_user_pool_client.this) > 0) ? { (var.client_name) = aws_cognito_user_pool_client.this[0].id } : {},
+    # Google client (when using Google IDP and client_name is provided)
+    (var.client_name != null && var.enable_google_idp && length(aws_cognito_user_pool_client.google) > 0) ? { ("${var.client_name}-google") = aws_cognito_user_pool_client.google[0].id } : {},
+    # Clients
+    { for name, client in aws_cognito_user_pool_client.clients : name => client.id }
+  )
+  description = "Map of all Cognito User Pool Client IDs (name -> client_id)"
 }
 
 output "user_pool_arn" {
@@ -25,7 +47,7 @@ output "admin_policy_arn" {
 }
 
 output "cognito_domain" {
-  value       = var.enable_google_idp && var.cognito_domain_prefix != null ? aws_cognito_user_pool_domain.this[0].domain : null
+  value       = length(aws_cognito_user_pool_domain.this) > 0 ? aws_cognito_user_pool_domain.this[0].domain : null
   description = "Cognito Hosted UI domain prefix (only when Google IDP and domain prefix are configured)"
 }
 

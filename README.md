@@ -59,18 +59,30 @@ terraform workspace select dev
 
 #### 1) `cognito`
 
-Creates a Cognito User Pool and Client with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation, Post Confirmation, and Post Authentication triggers, and Google Identity Provider (IDP) integration with Hosted UI.
+Creates a Cognito User Pool and one or more App Clients with configurable password policy, schema, recovery settings, and token validity. Supports optional Pre Token Generation, Post Confirmation, and Post Authentication triggers, and Google Identity Provider (IDP) integration with Hosted UI.
 
 Key inputs (see `cognito/variables.tf` for full list):
 
 - `user_pool_name` (string): User pool name
-- `client_name` (string): App client name
+- `client_name` (string, optional/LEGACY): Single app client name. **Deprecated in favor of `clients`**, kept for backward compatibility.
+- `clients` (list(object), optional): Preferred way to define one or more app clients. Each object supports:
+  - `name` (string): Client name (map key)
+  - `generate_secret` (bool, default `false`)
+  - `explicit_auth_flows` (list(string), default `["ALLOW_REFRESH_TOKEN_AUTH","ALLOW_USER_PASSWORD_AUTH","ALLOW_ADMIN_USER_PASSWORD_AUTH"]`)
+  - Token validity: `access_token_validity`, `id_token_validity`, `refresh_token_validity` and corresponding `*_unit`
+  - `prevent_user_existence_errors` (string, default `"ENABLED"`)
+  - OAuth (optional – omit to disable Hosted UI/OAuth for that client):
+    - `allowed_oauth_flows` (list(string)|null)
+    - `allowed_oauth_scopes` (list(string)|null)
+    - `allowed_oauth_flows_user_pool_client` (bool, default `false`)
+    - `supported_identity_providers` (list(string), default `["COGNITO"]`, e.g. `["COGNITO","Google"]`)
+    - `callback_urls` / `logout_urls` (list(string), default `[]`)
 - `username_attributes` (list(string)) default `["email"]`
 - `auto_verified_attributes` (list(string)) default `["email"]`
 - `enable_email_verification` (bool): Enable email verification, ensures email is in auto_verified_attributes (default `false`)
 - Password policy inputs: `minimum_length`, `require_lowercase`, `require_numbers`, `require_symbols`, `require_uppercase`, `temporary_password_validity_days`
 - Token validity inputs: `access_token_validity_unit`, `access_token_validity`, `id_token_validity_unit`, `id_token_validity`, `refresh_token_validity_unit`, `refresh_token_validity`
-- `explicit_auth_flows` (list(string))
+- `explicit_auth_flows` (list(string)) – legacy single-client flows (used with `client_name`)
 - `schema` and `recovery_mechanism` (advanced)
 - Pre Token Generation trigger:
   - `enable_pre_token_generation` (bool): Explicitly enable trigger resources (default `false`)
@@ -89,28 +101,57 @@ Key inputs (see `cognito/variables.tf` for full list):
     - `email_message` (string|null): Custom email message (use `{####}` placeholder for code)
     - `email_message_by_link` (string|null): Custom email message for link verification (use `{##Verify Email##}` placeholder)
     - `sms_message` (string|null): Custom SMS message (use `{####}` placeholder for code)
-- Google Identity Provider (optional):
-  - `enable_google_idp` (bool): Enable Google as an identity provider (default `false`)
+- Google Identity Provider (optional; shared across all clients that include `"Google"` in `supported_identity_providers`):
+  - `enable_google_idp` (bool): Legacy flag to enable Google as an identity provider (default `false`). New usage can rely solely on `clients[*].supported_identity_providers` including `"Google"`.
   - `google_client_id` (string|null, sensitive): Google OAuth client ID
   - `google_client_secret` (string|null, sensitive): Google OAuth client secret
-  - `callback_urls` (list(string)): OAuth callback URLs for Hosted UI (e.g., `["https://example.com/auth/callback"]`)
-  - `logout_urls` (list(string)): OAuth logout URLs for Hosted UI (e.g., `["https://example.com/"]`)
-  - `cognito_domain_prefix` (string|null): Domain prefix for Cognito Hosted UI (e.g., `"my-app-auth"`)
+  - `callback_urls` (list(string)): Legacy OAuth callback URLs for Hosted UI when using `client_name`
+  - `logout_urls` (list(string)): Legacy OAuth logout URLs for Hosted UI when using `client_name`
+  - `cognito_domain_prefix` (string|null): Domain prefix for Cognito Hosted UI (e.g., `"my-app-auth"`) – created when any client uses Google or `enable_google_idp = true`.
 
 Outputs (see `cognito/outputs.tf`):
 
 - `user_pool_id`
-- `user_pool_client_id` (returns Google client ID when Google IDP is enabled, otherwise standard client ID)
+- `user_pool_client_id` (**DEPRECATED** – kept for backward compatibility; returns legacy default/Google client or first client)
+- `user_pool_client_ids` (map(string)): Preferred output – `{"client_name" = "client_id"}` for all defined clients
 - `user_pool_arn`
 - `user_pool_issuer`
 - `admin_policy_arn`
 - `cognito_domain` (only when Google IDP and domain prefix are configured)
 
-Example `terraform.tfvars` (basic):
+Example `terraform.tfvars` (preferred multi-client usage):
 
 ```hcl
-user_pool_name  = "my-user-pool"
-client_name     = "my-web-client"
+user_pool_name = "my-user-pool"
+
+clients = [
+  {
+    name            = "web-app"
+    generate_secret = false
+    # Local Cognito users only (no OAuth/Hosted UI)
+  },
+  {
+    name                                 = "web-app-with-google"
+    generate_secret                      = false
+    allowed_oauth_flows                  = ["code"]
+    allowed_oauth_scopes                 = ["openid", "email", "profile"]
+    allowed_oauth_flows_user_pool_client = true
+    supported_identity_providers         = ["COGNITO", "Google"]
+    callback_urls                        = ["https://example.com/auth/callback"]
+    logout_urls                          = ["https://example.com/"]
+  }
+]
+
+google_client_id      = "your-google-client-id.apps.googleusercontent.com"
+google_client_secret  = "your-google-client-secret"
+cognito_domain_prefix = "my-app-auth"
+```
+
+Example `terraform.tfvars` (legacy single-client usage – still supported but discouraged):
+
+```hcl
+user_pool_name = "my-user-pool"
+client_name    = "my-web-client"
 
 # Optional Pre Token Generation trigger
 enable_pre_token_generation         = true
@@ -120,19 +161,19 @@ pre_token_generation_lambda_version = "V2_0"
 # Optional verification message template
 verification_message_template = {
   default_email_option = "CONFIRM_WITH_CODE"
-  email_subject         = "Your verification code"
-  email_message         = "Your verification code is {####}"
+  email_subject        = "Your verification code"
+  email_message        = "Your verification code is {####}"
   sms_message          = "Your verification code is {####}"
 }
 ```
 
-Example `terraform.tfvars` (with Google IDP):
+Example `terraform.tfvars` (legacy Google IDP with single client – still supported):
 
 ```hcl
-user_pool_name  = "my-user-pool"
-client_name     = "my-web-client"
+user_pool_name = "my-user-pool"
+client_name    = "my-web-client"
 
-# Enable Google Identity Provider
+# Legacy Google Identity Provider toggle
 enable_google_idp     = true
 google_client_id      = "your-google-client-id.apps.googleusercontent.com"
 google_client_secret  = "your-google-client-secret"
@@ -148,8 +189,7 @@ Notes:
 - When `enable_pre_token_generation = true`, the module configures `lambda_config.pre_token_generation_config` and grants invoke permission to Cognito via `aws_lambda_permission`. Use this flag to avoid plan-time indeterminism if your Lambda ARN is computed.
 - When `enable_post_confirmation = true`, the module configures `lambda_config.post_confirmation` and grants invoke permission to Cognito via `aws_lambda_permission`. This trigger is invoked after a user confirms their account (email or phone verification).
 - When `enable_post_authentication = true`, the module configures `lambda_config.post_authentication` and grants invoke permission to Cognito via `aws_lambda_permission`. This trigger is invoked after a user successfully authenticates (signs in).
-- When `enable_google_idp = true`, the module creates a separate Cognito client configured for Hosted UI with OAuth flows, a Google identity provider, and optionally a Cognito domain for the Hosted UI. The `user_pool_client_id` output automatically returns the Google client ID when enabled.
-- The Cognito domain is only created when both `enable_google_idp = true` and `cognito_domain_prefix` is provided.
+- When any client (legacy or in `clients`) uses Google as an IDP, the stack creates a shared Google identity provider for the pool and (optionally) a Hosted UI domain when `cognito_domain_prefix` is set.
 
 #### 2) `lambda`
 
