@@ -252,27 +252,71 @@ source_path         = "./layers/common-deps"
 
 #### 4) `apigw`
 
-Creates an API Gateway. You typically wire Lambda integrations by passing Lambda ARNs and enabling IAM permissions.
+Creates an API Gateway with Lambda integrations and optional Cognito JWT authorizer support. Supports multiple Cognito client IDs for JWT audience validation.
 
-Typical inputs:
+**Key inputs:**
 
-- `api_name` (string)
-- `stage_name` (string)
-- `description` (string)
-- `endpoint_type` (string) – e.g., `REGIONAL`
-- Integration inputs (Lambda ARNs, routes) as exposed by the stack
+- `api_name` (string): API name
+- `stage` (string): Stage name
+- `protocol_type` (string): `HTTP` or `WEBSOCKET` (default `HTTP`)
+- `routes` (map(object)): Route definitions with Lambda integrations
+  - `invoke_arn` (string): Lambda function invoke ARN
+  - `http_method` (string): HTTP method (e.g., `GET`, `POST`)
+  - `lambda_function_name` (string): Lambda function name
+  - `use_authorization` (bool): Enable JWT authorizer for this route
+  - `route_key` (string): Route path
+- **Cognito JWT Authorizer (optional):**
+  - `cognito_user_pool_issuer` (string): Cognito User Pool issuer URL
+  - `cognito_user_pool_client_ids` (list(string)): **Preferred** - List of Cognito client IDs for JWT audience validation (supports multiple clients)
+  - `cognito_user_pool_client_id` (string, **DEPRECATED**): Single Cognito client ID (kept for backward compatibility)
 
-Outputs:
+**Outputs:**
 
 - API ID/ARN, invoke URL, stage variables (as defined by the stack)
 
-Example `terraform.tfvars`:
+**Example `terraform.tfvars` (basic):**
 
 ```hcl
-api_name     = "my-api"
-stage_name   = "dev"
-endpoint_type = "REGIONAL"
+api_name = "my-api"
+stage    = "dev"
+routes = {
+  "get-users" = {
+    invoke_arn           = "arn:aws:lambda:region:account:function:get-users"
+    http_method          = "GET"
+    lambda_function_name = "get-users"
+    use_authorization    = true
+    route_key            = "users"
+  }
+}
 ```
+
+**Example `terraform.tfvars` (with Cognito - single client, deprecated):**
+
+```hcl
+api_name                  = "my-api"
+stage                     = "dev"
+cognito_user_pool_issuer  = module.cognito.user_pool_issuer
+cognito_user_pool_client_id = module.cognito.user_pool_client_id  # DEPRECATED
+```
+
+**Example `terraform.tfvars` (with Cognito - multiple clients, preferred):**
+
+```hcl
+api_name                  = "my-api"
+stage                     = "dev"
+cognito_user_pool_issuer  = module.cognito.user_pool_issuer
+cognito_user_pool_client_ids = [
+  module.cognito.user_pool_client_ids["web-app"],
+  module.cognito.user_pool_client_ids["mobile-app"]
+]
+```
+
+**Notes:**
+
+- When `cognito_user_pool_issuer` is provided and routes have `use_authorization = true`, a JWT authorizer is automatically created.
+- The `cognito_user_pool_client_ids` list allows multiple client IDs in the JWT audience, enabling different clients (web, mobile, etc.) to authenticate with the same API.
+- The deprecated `cognito_user_pool_client_id` is still supported for backward compatibility but will use only a single client ID.
+- If both `cognito_user_pool_client_ids` and `cognito_user_pool_client_id` are provided, `cognito_user_pool_client_ids` takes precedence.
 
 #### 5) `cloudfront`
 

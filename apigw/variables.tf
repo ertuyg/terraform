@@ -60,7 +60,13 @@ variable "cognito_user_pool_issuer" {
 }
 
 variable "cognito_user_pool_client_id" {
-  description = "Cognito User Pool Client ID"
+  description = "Cognito User Pool Client ID (DEPRECATED - use cognito_user_pool_client_ids instead; kept for backward compatibility)"
   type        = string
   default     = ""
+}
+
+variable "cognito_user_pool_client_ids" {
+  description = "Cognito User Pool Client IDs (list) - supports multiple client IDs for JWT authorizer audience"
+  type        = list(string)
+  default     = []
 }

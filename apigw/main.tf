@@ -80,15 +80,22 @@ resource "aws_lambda_permission" "this" {
 
 
 
+# Determine audience list: prefer cognito_user_pool_client_ids, fallback to cognito_user_pool_client_id for backward compatibility
+locals {
+  cognito_audience = length(var.cognito_user_pool_client_ids) > 0 ? var.cognito_user_pool_client_ids : (
+    var.cognito_user_pool_client_id != "" ? [var.cognito_user_pool_client_id] : []
+  )
+}
+
 resource "aws_apigatewayv2_authorizer" "cognito_authorizer" {
-  count            = var.cognito_user_pool_issuer != "" ? 1 : 0
+  count            = var.cognito_user_pool_issuer != "" && length(local.cognito_audience) > 0 ? 1 : 0
   api_id           = aws_apigatewayv2_api.this.id
   authorizer_type  = "JWT"
   identity_sources = ["$request.header.Authorization"]
   name             = "${var.api_name}Authorizer"
   jwt_configuration {
     issuer   = var.cognito_user_pool_issuer
-    audience = [var.cognito_user_pool_client_id]
+    audience = local.cognito_audience
   }
 }
 
