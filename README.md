@@ -202,6 +202,8 @@ Key inputs (typical):
 - `runtime` (string) – e.g., `nodejs20.x`, `python3.11`, etc.
 - `source_path` (string) – either a directory (zipped) or a single zip file path
 - `lambda_timeout` (number) – function timeout seconds
+- `lambda_memory_size` (number, optional) – memory in MB (default `512`)
+- `ephemeral_storage_size` (number, optional) – `/tmp` storage in MB (default `512`, valid 512–10240)
 - `environment_variables` (map(string))
 - `policy_attachments` (map(string)) – managed policy ARNs keyed by name
 - `layers` (list(string)) – optional layer ARNs
@@ -212,15 +214,17 @@ Outputs: expose the Lambda function and role ARNs/names if defined in the module
 Example `terraform.tfvars`:
 
 ```hcl
-function_name         = "pre-token-customizer"
-handler               = "index.handler"
-runtime               = "nodejs20.x"
-source_path           = "./src/pre-token-customizer" # or a .zip
-lambda_timeout        = 10
-environment_variables = { STAGE = "dev" }
-policy_attachments    = { basic = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" }
-layers                = []
-log_retention         = 14
+function_name          = "pre-token-customizer"
+handler                = "index.handler"
+runtime                = "nodejs20.x"
+source_path            = "./src/pre-token-customizer" # or a .zip
+lambda_timeout         = 10
+lambda_memory_size     = 512
+ephemeral_storage_size = 512
+environment_variables  = { STAGE = "dev" }
+policy_attachments     = { basic = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole" }
+layers                 = []
+log_retention          = 14
 ```
 
 Tip: If you want Cognito to call this function as the Pre Token Generation trigger, set the Lambda ARN in the `cognito` stack’s `pre_token_generation_lambda_arn`.

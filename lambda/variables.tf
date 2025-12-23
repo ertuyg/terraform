@@ -56,6 +56,18 @@ variable "lambda_timeout" {
   default     = 5
 }
 
+variable "lambda_memory_size" {
+  description = "The amount of memory in MB your Lambda Function can use at runtime."
+  type        = number
+  default     = 256
+}
+
+variable "ephemeral_storage_size" {
+  description = "The size of the Lambda function Ephemeral storage (/tmp) in MB. Valid values: 512 to 10240."
+  type        = number
+  default     = 512
+}
+
 variable "dead_letter_config" {
   description = "The dead letter configuration for the Lambda function."
   type = object({

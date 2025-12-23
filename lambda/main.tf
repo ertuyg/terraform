@@ -17,10 +17,15 @@ resource "aws_lambda_function" "this" {
   handler       = var.handler
   role          = aws_iam_role.lambda_execution_role.arn
   runtime       = var.runtime
+  memory_size   = var.lambda_memory_size
 
   source_code_hash = data.archive_file.this.output_base64sha256
   filename         = data.archive_file.this.output_path
   timeout          = var.lambda_timeout
+
+  ephemeral_storage {
+    size = var.ephemeral_storage_size
+  }
 
   environment {
     variables = var.environment_variables
