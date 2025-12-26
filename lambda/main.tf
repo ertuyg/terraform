@@ -23,8 +23,11 @@ resource "aws_lambda_function" "this" {
   filename         = data.archive_file.this.output_path
   timeout          = var.lambda_timeout
 
-  ephemeral_storage {
-    size = var.ephemeral_storage_size
+  dynamic "ephemeral_storage" {
+    for_each = var.ephemeral_storage_size != null ? [1] : []
+    content {
+      size = var.ephemeral_storage_size
+    }
   }
 
   environment {

@@ -60,12 +60,23 @@ variable "lambda_memory_size" {
   description = "The amount of memory in MB your Lambda Function can use at runtime."
   type        = number
   default     = 256
+
+  validation {
+    condition     = var.lambda_memory_size >= 128 && var.lambda_memory_size <= 10240
+    error_message = "Lambda memory_size must be between 128 and 10240 MB."
+  }
 }
 
 variable "ephemeral_storage_size" {
-  description = "The size of the Lambda function Ephemeral storage (/tmp) in MB. Valid values: 512 to 10240."
+  description = "The size of the Lambda function Ephemeral storage (/tmp) in MB. Valid values: 512 to 10240. Set to null to use AWS default (512 MB)."
   type        = number
   default     = 512
+  nullable    = true
+
+  validation {
+    condition     = var.ephemeral_storage_size == null || (var.ephemeral_storage_size >= 512 && var.ephemeral_storage_size <= 10240)
+    error_message = "Lambda ephemeral_storage_size must be null (uses AWS default 512 MB) or between 512 and 10240 MB."
+  }
 }
 
 variable "dead_letter_config" {
