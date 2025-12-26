@@ -17,7 +17,7 @@ resource "aws_lambda_function" "this" {
   handler       = var.handler
   role          = aws_iam_role.lambda_execution_role.arn
   runtime       = var.runtime
-  memory_size   = var.lambda_memory_size
+  memory_size   = var.lambda_memory_size != null ? var.lambda_memory_size : 128
 
   source_code_hash = data.archive_file.this.output_base64sha256
   filename         = data.archive_file.this.output_path

@@ -57,13 +57,14 @@ variable "lambda_timeout" {
 }
 
 variable "lambda_memory_size" {
-  description = "The amount of memory in MB your Lambda Function can use at runtime."
+  description = "The amount of memory in MB your Lambda Function can use at runtime. Set to null to use AWS default (128 MB)."
   type        = number
   default     = 256
+  nullable    = true
 
   validation {
-    condition     = var.lambda_memory_size >= 128 && var.lambda_memory_size <= 10240
-    error_message = "Lambda memory_size must be between 128 and 10240 MB."
+    condition     = var.lambda_memory_size == null || (var.lambda_memory_size >= 128 && var.lambda_memory_size <= 10240)
+    error_message = "Lambda memory_size must be null (uses AWS default 128 MB) or between 128 and 10240 MB."
   }
 }
 
