@@ -270,7 +270,8 @@ Creates an API Gateway with Lambda integrations and optional Cognito JWT authori
   - `use_authorization` (bool): Enable JWT authorizer for this route
   - `route_key` (string): Route path
 - **Cognito JWT Authorizer (optional):**
-  - `cognito_user_pool_issuer` (string): Cognito User Pool issuer URL
+  - `enable_cognito_jwt_authorizer` (bool, **required**): `true` to create the Cognito JWT authorizer, `false` to skip. Must be set explicitly so Terraform never infers authorizer `count` from client ids (avoids “Invalid count argument” when ids are only known after apply).
+  - `cognito_user_pool_issuer` (string): Cognito User Pool issuer URL (needed when the authorizer is enabled)
   - `cognito_user_pool_client_ids` (list(string)): **Preferred** - List of Cognito client IDs for JWT audience validation (supports multiple clients)
   - `cognito_user_pool_client_id` (string, **DEPRECATED**): Single Cognito client ID (kept for backward compatibility)
 
@@ -281,14 +282,15 @@ Creates an API Gateway with Lambda integrations and optional Cognito JWT authori
 **Example `terraform.tfvars` (basic):**
 
 ```hcl
-api_name = "my-api"
-stage    = "dev"
+api_name                      = "my-api"
+stage                         = "dev"
+enable_cognito_jwt_authorizer = false
 routes = {
   "get-users" = {
     invoke_arn           = "arn:aws:lambda:region:account:function:get-users"
     http_method          = "GET"
     lambda_function_name = "get-users"
-    use_authorization    = true
+    use_authorization    = false
     route_key            = "users"
   }
 }
@@ -297,27 +299,30 @@ routes = {
 **Example `terraform.tfvars` (with Cognito - single client, deprecated):**
 
 ```hcl
-api_name                  = "my-api"
-stage                     = "dev"
-cognito_user_pool_issuer  = module.cognito.user_pool_issuer
-cognito_user_pool_client_id = module.cognito.user_pool_client_id  # DEPRECATED
+api_name                      = "my-api"
+stage                         = "dev"
+enable_cognito_jwt_authorizer = true
+cognito_user_pool_issuer      = module.cognito.user_pool_issuer
+cognito_user_pool_client_id   = module.cognito.user_pool_client_id # DEPRECATED
 ```
 
 **Example `terraform.tfvars` (with Cognito - multiple clients, preferred):**
 
 ```hcl
-api_name                  = "my-api"
-stage                     = "dev"
-cognito_user_pool_issuer  = module.cognito.user_pool_issuer
+api_name                       = "my-api"
+stage                          = "dev"
+enable_cognito_jwt_authorizer  = true
+cognito_user_pool_issuer       = module.cognito.user_pool_issuer
 cognito_user_pool_client_ids = [
   module.cognito.user_pool_client_ids["web-app"],
-  module.cognito.user_pool_client_ids["mobile-app"]
+  module.cognito.user_pool_client_ids["mobile-app"],
 ]
 ```
 
 **Notes:**
 
-- When `cognito_user_pool_issuer` is provided and routes have `use_authorization = true`, a JWT authorizer is automatically created.
+- The JWT authorizer is created only when `enable_cognito_jwt_authorizer = true`. Its `count` does not depend on audience/client id values.
+- For protected routes, set `use_authorization = true` on the route **and** `enable_cognito_jwt_authorizer = true` with issuer and client id(s). Variable validation rejects `enable_cognito_jwt_authorizer = false` when any route has `use_authorization = true`.
 - The `cognito_user_pool_client_ids` list allows multiple client IDs in the JWT audience, enabling different clients (web, mobile, etc.) to authenticate with the same API.
 - The deprecated `cognito_user_pool_client_id` is still supported for backward compatibility but will use only a single client ID.
 - If both `cognito_user_pool_client_ids` and `cognito_user_pool_client_id` are provided, `cognito_user_pool_client_ids` takes precedence.

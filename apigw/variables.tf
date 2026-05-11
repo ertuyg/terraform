@@ -70,3 +70,17 @@ variable "cognito_user_pool_client_ids" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_cognito_jwt_authorizer" {
+  description = <<-EOT
+    Required. When true, creates the API Gateway JWT authorizer (count is driven only by this flag, not by audience/client ids).
+
+    When false, no authorizer exists. If any route sets use_authorization = true, this must be true (enforced by validation).
+  EOT
+  type        = bool
+
+  validation {
+    condition     = !contains([for r in var.routes : r.use_authorization], true) || var.enable_cognito_jwt_authorizer
+    error_message = "When any route has use_authorization = true, enable_cognito_jwt_authorizer must be true (otherwise JWT is not attached and the route would be effectively open)."
+  }
+}
