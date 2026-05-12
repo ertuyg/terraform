@@ -455,7 +455,7 @@ Typical inputs:
 - `range_key` (string|null)
 - `attributes` (list(object)) – name/type definitions
 - `ttl` (object) – attribute name and enabled flag
-- `global_secondary_indexes` / `local_secondary_indexes`
+- `global_secondary_indexes` (list): each item has `name`, `hash_key`, `range_key`, `projection_type` (`KEYS_ONLY` | `INCLUDE` | `ALL`), and optional `non_key_attributes` (required non-empty list when `projection_type` is `INCLUDE`; must be omitted or null for other projection types).
 
 Outputs:
 
@@ -467,8 +467,20 @@ Example `terraform.tfvars`:
 table_name   = "users"
 billing_mode = "PAY_PER_REQUEST"
 hash_key     = "userId"
-attributes = [
-  { name = "userId", type = "S" }
+range_key    = "SK"
+additional_attributes = [
+  { name = "GSI1PK", type = "S" },
+  { name = "GSI1SK", type = "S" },
+  { name = "email",  type = "S" },
+]
+global_secondary_indexes = [
+  {
+    name            = "EmailIndex"
+    hash_key        = "GSI1PK"
+    range_key       = "GSI1SK"
+    projection_type = "INCLUDE"
+    non_key_attributes = ["email"]
+  },
 ]
 ```
 

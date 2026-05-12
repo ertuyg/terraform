@@ -47,16 +47,28 @@ variable "additional_attributes" {
 }
 
 variable "global_secondary_indexes" {
-  description = "Global secondary indexes of the DynamoDB table"
+  description = <<-EOT
+    Global secondary indexes. projection_type: KEYS_ONLY, INCLUDE, or ALL.
+    For INCLUDE, set non_key_attributes to a non-empty list of attribute names to project (those attributes must be declared in additional_attributes or as table keys).
+  EOT
   type = list(object({
-    name            = string
-    hash_key        = string
-    range_key       = string
-    projection_type = string
+    name               = string
+    hash_key           = string
+    range_key          = string
+    projection_type    = string
+    non_key_attributes = optional(list(string), null)
     # read_capacity   = optional(number)
-    # write_capacity  = optional(number)              
+    # write_capacity  = optional(number)
   }))
   default = []
+
+  validation {
+    condition = alltrue([
+      for gsi in var.global_secondary_indexes :
+      gsi.projection_type == "INCLUDE" ? length(coalesce(gsi.non_key_attributes, [])) > 0 : length(coalesce(gsi.non_key_attributes, [])) == 0
+    ])
+    error_message = "For projection_type INCLUDE, non_key_attributes must be a non-empty list. For KEYS_ONLY or ALL, omit non_key_attributes or use null (empty list is not valid for INCLUDE)."
+  }
 }
 
 variable "ttl_enabled" {
