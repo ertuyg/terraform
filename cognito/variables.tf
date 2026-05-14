@@ -288,3 +288,15 @@ variable "clients" {
   }))
   default = []
 }
+
+
+variable "email_configuration" {
+  description = "Cognito email configuration. Use DEVELOPER to send emails through Amazon SES."
+  type = object({
+    email_sending_account  = optional(string, "COGNITO_DEFAULT")
+    source_arn             = optional(string)
+    from_email_address     = optional(string)
+    reply_to_email_address = optional(string)
+  })
+  default = null
+}
