@@ -13,6 +13,10 @@ resource "aws_cognito_user_pool" "this" {
     temporary_password_validity_days = var.temporary_password_validity_days
   }
 
+  lifecycle {
+    prevent_destroy = true
+  }
+
   account_recovery_setting {
     dynamic "recovery_mechanism" {
       for_each = var.recovery_mechanism
