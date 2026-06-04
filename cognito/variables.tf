@@ -290,6 +290,19 @@ variable "clients" {
 }
 
 
+variable "admin_create_user_config" {
+  description = "Configuration for admin-created users (invite flow). invite_message_template uses {username} and {####} placeholders."
+  type = object({
+    allow_admin_create_user_only = optional(bool, false)
+    invite_message_template = optional(object({
+      email_subject = string
+      email_message = string
+      sms_message   = optional(string)
+    }))
+  })
+  default = null
+}
+
 variable "email_configuration" {
   description = "Cognito email configuration. Use DEVELOPER to send emails through Amazon SES."
   type = object({
