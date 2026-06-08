@@ -12,7 +12,7 @@ resource "aws_s3_bucket_cors_configuration" "example_cors" {
     allowed_headers = ["*"]
     allowed_methods = ["PUT", "POST", "DELETE"]
     allowed_origins = var.cors_allowed_origins
-    expose_headers  = []
+    expose_headers  = ["ETag"]
   }
 }
 
