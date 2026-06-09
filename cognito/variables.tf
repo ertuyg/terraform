@@ -219,6 +219,18 @@ variable "enable_post_authentication" {
   default     = false
 }
 
+variable "custom_message_lambda_arn" {
+  description = "Lambda ARN to use for Cognito Custom Message trigger (optional)"
+  type        = string
+  default     = null
+}
+
+variable "enable_custom_message" {
+  description = "Explicitly enable Custom Message trigger resources (useful when ARN is computed)."
+  type        = bool
+  default     = false
+}
+
 variable "enable_google_idp" {
   type    = bool
   default = false
