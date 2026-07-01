@@ -107,8 +107,9 @@ resource "aws_cognito_user_pool_client" "this" {
 
   name = var.client_name
 
-  user_pool_id    = aws_cognito_user_pool.this.id
-  generate_secret = var.client_generate_secret
+  user_pool_id            = aws_cognito_user_pool.this.id
+  generate_secret         = var.client_generate_secret
+  enable_token_revocation = true
 
   token_validity_units {
     access_token  = var.access_token_validity_unit
@@ -132,8 +133,9 @@ resource "aws_cognito_user_pool_client" "google" {
   name         = "${var.client_name}-google"
   user_pool_id = aws_cognito_user_pool.this.id
 
-  generate_secret     = var.client_generate_secret
-  explicit_auth_flows = var.explicit_auth_flows
+  generate_secret         = var.client_generate_secret
+  explicit_auth_flows     = var.explicit_auth_flows
+  enable_token_revocation = true
 
   # Hosted UI + Google için zorunlu alanlar
   allowed_oauth_flows                  = ["code"]
@@ -163,8 +165,9 @@ resource "aws_cognito_user_pool_client" "clients" {
   name         = each.value.name
   user_pool_id = aws_cognito_user_pool.this.id
 
-  generate_secret     = each.value.generate_secret
-  explicit_auth_flows = each.value.explicit_auth_flows
+  generate_secret         = each.value.generate_secret
+  explicit_auth_flows     = each.value.explicit_auth_flows
+  enable_token_revocation = each.value.enable_token_revocation
 
   access_token_validity         = each.value.access_token_validity
   id_token_validity             = each.value.id_token_validity

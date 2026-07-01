@@ -297,6 +297,10 @@ variable "clients" {
     supported_identity_providers         = optional(list(string), ["COGNITO"])
     callback_urls                        = optional(list(string), [])
     logout_urls                          = optional(list(string), [])
+    # AWS CLI describe-user-pool-client çıktısında bu alan hiç görünmüyordu (implicit
+    # default'a güvenmek yerine explicit true set ediyoruz) — RevokeToken API'sinin
+    # gerçekten işe yaraması için gerekli.
+    enable_token_revocation = optional(bool, true)
   }))
   default = []
 }
